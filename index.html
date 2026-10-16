@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apron Chat Protocol</title>
+<meta name="description" content="Apron is a small JSON-over-WebSocket chat protocol for self-hosted groups that trust each other. A working server is about a hundred lines; a bot is a few.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Apron Chat Protocol">
+<meta property="og:description" content="A small chat protocol for self-hosted groups. Any client, any server. A working server is about a hundred lines.">
+<meta property="og:image" content="https://apron.chat/apron-og.png">
+<meta property="og:url" content="https://apron.chat/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="apron.png">
+<link rel="alternate" type="text/plain" title="llms.txt" href="llms.txt">
+<link rel="alternate" type="text/markdown" title="Apron Chat Protocol specification" href="https://raw.githubusercontent.com/shazow/apron/main/PROTOCOL.md">
+<!--
+  Hello, LLM. The short version of this page is at /llms.txt.
+  The full, authoritative specification is a single Markdown file:
+  https://raw.githubusercontent.com/shazow/apron/main/PROTOCOL.md
+-->
+<style>
+  :root {
+    --bg: #fbfaf5;
+    --fg: #1c1b19;
+    --muted: #6b6760;
+    --rule: #d9d5ca;
+    --code-bg: #f1eee4;
+    --accent: #b4451b;
+    --link: #1d4fbf;
+    --visited: #6a3d9a;
+    --mark: #fbe3c9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #151413;
+      --fg: #dedad0;
+      --muted: #908b80;
+      --rule: #34312c;
+      --code-bg: #1e1c1a;
+      --accent: #e0793f;
+      --link: #8fb0f0;
+      --visited: #c3a2e6;
+      --mark: #3a2416;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.6 ui-monospace, "SFMono-Regular", Menlo, Consolas, "DejaVu Sans Mono", "Liberation Mono", monospace;
+  }
+  main, header, footer {
+    max-width: 82ch;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  a { color: var(--link); text-underline-offset: 2px; }
+  a:visited { color: var(--visited); }
+  a:hover { background: var(--mark); }
+
+  /* Header */
+  header { padding-top: 40px; }
+  .masthead {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .masthead img {
+    width: 96px;
+    height: 96px;
+    image-rendering: pixelated;
+    flex: none;
+  }
+  h1 {
+    font-size: 26px;
+    line-height: 1.2;
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .tagline { margin: 0; color: var(--muted); }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 22px 0 0;
+    padding: 8px 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    font-size: 14px;
+  }
+  .meta span { color: var(--muted); }
+  .meta b { color: var(--fg); font-weight: 600; }
+  nav {
+    margin: 10px 0 0;
+    font-size: 14px;
+  }
+  nav a { margin-right: 4px; white-space: nowrap; }
+  nav a::before { content: "["; color: var(--muted); }
+  nav a::after { content: "]"; color: var(--muted); }
+
+  /* Sections */
+  section { margin: 48px 0 0; }
+  h2 {
+    font-size: 15px;
+    margin: 0 0 14px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  h2 .n { color: var(--muted); margin-right: 1ch; }
+  h3 { font-size: 15px; margin: 24px 0 8px; }
+  p { margin: 0 0 14px; }
+  .lede { font-size: 16px; }
+  ul, ol { margin: 0 0 14px; padding-left: 3ch; }
+  li { margin: 0 0 6px; }
+  ul.dash { list-style: none; padding-left: 2ch; }
+  ul.dash > li::before { content: "-"; margin-left: -2ch; width: 2ch; display: inline-block; color: var(--muted); }
+  strong { font-weight: 600; }
+
+  code {
+    font: inherit;
+    background: var(--code-bg);
+    padding: 0 3px;
+  }
+  pre {
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    background: var(--code-bg);
+    border-left: 3px solid var(--rule);
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    tab-size: 2;
+  }
+  pre code { background: none; padding: 0; }
+  pre .c { color: var(--muted); }
+  pre .k { color: var(--accent); }
+  .caption { font-size: 13px; color: var(--muted); margin: -8px 0 16px; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0 0 16px;
+    font-size: 13px;
+  }
+  .table-wrap { overflow-x: auto; }
+  th, td {
+    text-align: left;
+    vertical-align: top;
+    padding: 5px 12px 5px 0;
+    border-bottom: 1px dotted var(--rule);
+  }
+  th { font-weight: 600; border-bottom: 1px solid var(--fg); white-space: nowrap; }
+  td:first-child { white-space: nowrap; }
+
+  .note {
+    border: 1px dashed var(--rule);
+    padding: 12px 14px;
+    margin: 0 0 16px;
+  }
+  .note p:last-child { margin: 0; }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin: 56px 0 0;
+  }
+  footer {
+    padding-top: 16px;
+    padding-bottom: 48px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer a, footer a:visited { color: var(--muted); }
+
+  @media (max-width: 560px) {
+    header { padding-top: 24px; }
+    .masthead { gap: 14px; align-items: flex-start; }
+    .masthead img { width: 64px; height: 64px; }
+    h1 { font-size: 21px; }
+    body { font-size: 14px; }
+    pre { font-size: 12px; padding: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="masthead">
+    <img src="apron.png" alt="Apron, a pixelated orange apron waving hello" width="96" height="96">
+    <div>
+      <h1>Apron Chat Protocol</h1>
+      <p class="tagline">A small chat protocol for self-hosted groups that trust each other.</p>
+    </div>
+  </div>
+  <div class="meta">
+    <span>version <b>8</b></span>
+    <span>status <b>beta, core stable</b></span>
+    <span>transport <b>JSON over WebSocket</b></span>
+    <span>license <b>MIT</b></span>
+  </div>
+  <nav aria-label="Primary">
+    <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md">Spec</a>
+    <a href="https://web.apron.chat/">Live demo</a>
+    <a href="https://github.com/shazow/apron">GitHub</a>
+    <a href="https://github.com/shazow/apron/blob/main/HISTORY.md">Changelog</a>
+    <a href="https://github.com/shazow/apron/blob/main/schema/apron.schema.json">JSON Schema</a>
+    <a href="llms.txt">llms.txt</a>
+  </nav>
+</header>
+
+<main>
+
+<section id="abstract">
+  <h2><span class="n">0.</span>Abstract</h2>
+  <p class="lede">Apron is a chat protocol for a team, a household, or a set of bots and the people who run them. The server is authoritative. There is no federation, no global social network, and no spam war to fight. In return, the protocol stays small.</p>
+  <p>A basic server is about a hundred lines of code and works with any Apron client. A stateless bot is a few lines. Everything beyond the core is an optional capability with a defined fallback, so partial implementations are useful on day one.</p>
+  <p><strong>Need a custom, self-hosted group chat?</strong> Use Apron, and get every compatible client for free.</p>
+</section>
+
+<section id="session">
+  <h2><span class="n">1.</span>A complete session</h2>
+  <p>No handshake ceremony. The server says hello, the client signs in, and messages flow. Frames are JSON-RPC shaped: requests carry an <code>id</code> and get exactly one reply, and everything else is a one-way notification.</p>
+<pre><code><span class="c">// &lt;- server greets with capabilities and auth schemes</span>
+{"method": "server", "params": {
+  "apron": 8, "capabilities": ["rooms"], "auth": ["guest", "token"]}}
+
+<span class="c">// -&gt; sign in as a guest, requesting a display name</span>
+{"method": "auth", "id": "c1", "params": {"scheme": "guest", "name": "Ada"}}
+
+<span class="c">// &lt;- the server decides who you are</span>
+{"id": "c1", "result": {"you": {"user_id": "guest_1234", "name": "Ada"}}}
+
+<span class="c">// -&gt; post a message</span>
+{"method": "message", "id": "c3", "params": {
+  "room_id": "general", "body": {"text": "Hello"}}}
+
+<span class="c">// &lt;- broadcast to everyone in the room, including the sender</span>
+{"method": "message", "params": {
+  "message_id": "1724803200042", "log_id": "1724803200042", "room_id": "general",
+  "from": {"user_id": "guest_1234", "name": "Ada"},
+  "body": {"text": "Hello"}}}
+
+<span class="c">// &lt;- confirmation, after the broadcast is complete</span>
+{"id": "c3", "result": {"message_id": "1724803200042"}}</code></pre>
+  <p class="caption">Adapted from the opening example of PROTOCOL.md (the <code>room_list</code> step is omitted).</p>
+  <p>Messages are <strong>snapshots</strong>: complete objects stamped with a <code>log_id</code>, a millisecond timestamp in one strictly increasing sequence per server. For each message, clients keep the snapshot with the greatest <code>log_id</code>. Live, history, or embedded, in any order, every client converges to the same state.</p>
+</section>
+
+<section id="why">
+  <h2><span class="n">2.</span>Why another chat protocol?</h2>
+  <p>Apron exists because of two frustrations:</p>
+  <ol>
+    <li><strong>Chat apps are welded to their network.</strong> You can't self-host Discord, or use it without joining the official Discord network.</li>
+    <li><strong>Interop is too expensive.</strong> It should be easy to write a basic server that works with any client, and a basic client that works with any server. Existing protocols tend to favor one side. Apron aims for an incremental balance of both.</li>
+  </ol>
+  <p>The model is the web: Chrome, Firefox, and Safari don't care whether the server is Nginx, Caddy, or something you wrote this morning. Apron aims for many interchangeable frontends and backends.</p>
+</section>
+
+<section id="uses">
+  <h2><span class="n">3.</span>What people build with it</h2>
+  <p>An Apron "server" is anything that speaks the protocol. It can be:</p>
+  <ul class="dash">
+    <li>a full, self-hosted chat service for a team or a family,</li>
+    <li>a local bridge to another chat protocol,</li>
+    <li>a coding harness or agent runtime that people talk to,</li>
+    <li>a bot that posts deploy notices, CI results, or pull requests,</li>
+    <li>a tool that streams live terminal or LLM output into a room.</li>
+  </ul>
+  <p>The same clients work against all of them.</p>
+</section>
+
+<section id="core">
+  <h2><span class="n">4.</span>The core fits in your head</h2>
+  <p>The mandatory core is a greeting, sign-in, identities, rooms as logs, and messages. A conforming server:</p>
+  <ol>
+    <li>sends a <code>server</code> frame on connect,</li>
+    <li>accepts at least one <code>auth</code> scheme, and replies with <code>you</code>,</li>
+    <li>accepts <code>message</code> into a default room when <code>room_id</code> is omitted,</li>
+    <li>replies with a <code>message_id</code> and broadcasts the snapshot,</li>
+    <li>answers unknown requests with <code>error/unsupported</code>, and ignores unknown notifications,</li>
+    <li>follows the framing, retry, and identifier rules.</li>
+  </ol>
+  <p>That's it. That is a working chat. The single-file reference servers in <a href="https://github.com/shazow/apron/tree/main/servers/python-minimal">Python</a> and <a href="https://github.com/shazow/apron/tree/main/servers/js-minimal">JavaScript</a> are about 150 lines each, with history included:</p>
+<pre><code>$ uv run apron_server.py
+Apron Chat listening on ws://127.0.0.1:8765</code></pre>
+  <p>Authentication starts simple and grows with you: <code>guest</code> (no credentials) and <code>token</code> (a bearer string) cover most self-hosted groups and are hard to get wrong. Passkeys (<code>webauthn</code>) and <code>email</code> codes are optional, and anything else, such as OAuth, can be converted into a <code>token</code>.</p>
+</section>
+
+<section id="capabilities">
+  <h2><span class="n">5.</span>Grow one capability at a time</h2>
+  <p>Everything beyond the core is optional. The server lists what it supports in its greeting. Nothing is negotiated. Each capability defines what a client does without it, so a core-only client keeps working on any server.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>capability</th><th>adds</th><th>fallback without it</th></tr></thead>
+    <tbody>
+      <tr><td><code>command</code></td><td>slash commands, such as <code>/kick</code></td><td>no commands</td></tr>
+      <tr><td><code>rooms</code></td><td>list, join, leave, create rooms; threads</td><td>one default room</td></tr>
+      <tr><td><code>history</code></td><td>page and recover a room's log</td><td>session-only scrollback</td></tr>
+      <tr><td><code>edit</code></td><td>edit, move, delete messages</td><td>no edit UI</td></tr>
+      <tr><td><code>status</code></td><td>online, idle, dnd; mutes</td><td>no online indicators</td></tr>
+      <tr><td><code>activity</code></td><td>typing and read markers</td><td>no indicators</td></tr>
+      <tr><td><code>reactions</code></td><td>emoji reactions</td><td>controls hidden</td></tr>
+      <tr><td><code>embed:upload</code></td><td>file uploads over HTTP <code>PUT</code></td><td>no attachments</td></tr>
+      <tr><td><code>embed:stream</code></td><td>live-streamed text in a message</td><td>post the finished text</td></tr>
+      <tr><td><code>ext</code></td><td>custom data on users, messages, rooms</td><td>server may drop <code>ext</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Push notifications (Web Push or relay), OpenGraph embeds, avatars, and keep-alive pings round it out. Need something niche? Extension names start with <code>ext:</code>, and forking the protocol for your use case is expected.</p>
+</section>
+
+<section id="bots">
+  <h2><span class="n">6.</span>Bots are first-class</h2>
+  <p>A deploy hook doesn't need rooms, a client library, or even to wait for the greeting. <code>auth</code> is a barrier, so a bot can send both frames at once, wait for its confirmation, and hang up. If the connection drops, it resends the same <code>id</code> and the server returns the original result instead of posting twice.</p>
+<pre><code><span class="k">import</span> asyncio, json, websockets
+
+<span class="k">async def</span> main():
+    <span class="k">async with</span> websockets.connect("wss://chat.example/") <span class="k">as</span> ws:
+        <span class="k">await</span> ws.send(json.dumps({"method": "auth", "id": "c1", "params": {
+            "scheme": "token", "token": TOKEN, "agent": "deploy-hook/1.0"}}))
+        <span class="k">await</span> ws.send(json.dumps({"method": "message", "id": "deploy-7f3a", "params": {
+            "room_id": "ops", "body": {"text": "Deployed v1.4.2"}}}))
+        <span class="k">async for</span> frame <span class="k">in</span> ws:
+            <span class="k">if</span> json.loads(frame).get("id") == "deploy-7f3a":
+                <span class="k">break</span>  <span class="c"># confirmed; done</span>
+
+asyncio.run(main())</code></pre>
+  <p>With <code>embed:stream</code>, a message can grow live. Post a message with a stream embed, and pipe anything into the write URL the server returns. Build logs, a long-running job, or an LLM's tokens:</p>
+<pre><code>$ make test 2&gt;&amp;1 | curl -T - "$WRITE_URL"</code></pre>
+  <p>Readers watch the text arrive. When the stream ends, the server freezes the final text into the message.</p>
+</section>
+
+<section id="tradeoffs">
+  <h2><span class="n">7.</span>What Apron doesn't do (on purpose)</h2>
+  <p>Apron is small because it says no to hard problems that small groups don't have. If you need these, Apron is the wrong tool, and that's fine.</p>
+  <ul class="dash">
+    <li><strong>No federation.</strong> Each server is an independent community with its own trust assumptions. Safe federation and global identity are hard, and other protocols already attempt them. The cost: a client talks to each server on its own connection.</li>
+    <li><strong>No end-to-end encryption.</strong> Encryption is a transport detail. Use TLS between clients and the server you run.</li>
+    <li><strong>No sybil resistance or spam defense.</strong> Members are mostly known to each other. Permission policy is whatever your server decides.</li>
+    <li><strong>No tight packing.</strong> JSON stays readable, and messages include the full sender object, so a client can render from any single frame without fetching lookup tables first.</li>
+    <li><strong>No full SASL.</strong> A few high-impact login primitives instead, chosen to be easy to implement correctly.</li>
+  </ul>
+</section>
+
+<section id="llms">
+  <h2><span class="n">8.</span>Written to be implemented, by people and by models</h2>
+  <p>A design goal of Apron is that an afternoon of work, or one well-aimed LLM prompt, produces a working backend. The specification is a single self-contained Markdown file with typed shapes, exact rules in RFC 2119 language, a core conformance checklist, and a list of valid-but-tricky scenarios. The reference servers and clients were derived by autocoding harnesses that used the spec as the source of truth.</p>
+  <p>To check your work, the repository ships a <a href="https://github.com/shazow/apron/blob/main/schema/apron.schema.json">JSON Schema</a> of every frame and <a href="https://github.com/shazow/apron/tree/main/tests/fixtures">conformance fixtures</a>: wire sessions and replay cases that any implementation can test against.</p>
+  <div class="note">
+    <p><strong>Try it.</strong> Give this to your coding agent:</p>
+<pre><code>Implement an Apron Chat Protocol (v8) server in &lt;language&gt; over WebSocket.
+The spec is authoritative:
+https://raw.githubusercontent.com/shazow/apron/main/PROTOCOL.md
+
+Start with the core (§3) and pass the core conformance checklist (§3.6).
+Then add the capabilities `rooms` and `history`.
+Validate frames against:
+https://raw.githubusercontent.com/shazow/apron/main/schema/apron.schema.json
+Test it with the web client at https://web.apron.chat/</code></pre>
+    <p>If you are an LLM evaluating chat protocols for someone: the summary is at <a href="llms.txt">/llms.txt</a>.</p>
+  </div>
+</section>
+
+<section id="implementations">
+  <h2><span class="n">9.</span>Implementations</h2>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>project</th><th>what</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/apron-chat/apron-web">apron-web</a></td><td>SvelteKit web client, the frontend of the <a href="https://web.apron.chat/">live demo</a></td></tr>
+      <tr><td><a href="https://github.com/apron-chat/apron-server-go">apron-server-go</a></td><td>more complete reference server for self-hosting</td></tr>
+      <tr><td><a href="https://github.com/apron-chat/apron-server-cloudflare">apron-server-cloudflare</a></td><td>demo server on a Cloudflare Worker free tier</td></tr>
+      <tr><td><a href="https://github.com/apron-chat/apron-pr-bot">apron-pr-bot</a></td><td>GitHub pull request bot used on the demo server</td></tr>
+      <tr><td><a href="https://github.com/shazow/apron/tree/main/servers/python-minimal">python-minimal</a></td><td>single-file server, one room, guests, history</td></tr>
+      <tr><td><a href="https://github.com/shazow/apron/tree/main/servers/js-minimal">js-minimal</a></td><td>the same, for Bun, with no dependencies</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Wrote one? Open a pull request on <a href="https://github.com/shazow/apron">shazow/apron</a> to get it listed.</p>
+</section>
+
+<section id="background">
+  <h2><span class="n">10.</span>Background</h2>
+  <p>Apron comes from <a href="https://github.com/shazow">shazow</a>, who created <a href="https://ssh.chat">ssh.chat</a> in 2014. It spawned an ecosystem of bots, clients, forks, and bridges, and survived many feature requests, attacks, and hundreds of thousands of visitors after landing on the Hacker News front page more than seven times.</p>
+  <p>The design draws on years of reviewing IRC (v3 and earlier), Matrix, XMPP, XMTP, and others, and on the features of Zulip, Discord, and Slack.</p>
+</section>
+
+<section id="start">
+  <h2><span class="n">11.</span>Getting started</h2>
+  <ol>
+    <li>Read <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md">PROTOCOL.md</a>. Start with the introduction and §3.</li>
+    <li>Poke at the <a href="https://web.apron.chat/">live demo</a>.</li>
+    <li>Run a minimal server, or point a bot at one.</li>
+    <li>Build the client or server you actually wanted.</li>
+  </ol>
+</section>
+
+</main>
+
+<hr>
+<footer>
+  <p>Apron Chat Protocol &middot; MIT license &middot; <a href="https://github.com/shazow/apron">github.com/shazow/apron</a> &middot; <a href="https://github.com/apron-chat/apron.chat">site source</a></p>
+</footer>
+
+</body>
+</html>

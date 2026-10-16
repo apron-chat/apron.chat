@@ -1,0 +1,48 @@
+# Apron Chat Protocol
+
+> Apron is a small, JSON-over-WebSocket chat protocol for self-hosted groups whose members mostly trust each other: a team, a household, or a set of bots and the people who run them. The server is authoritative on identity, membership, and history. There is no federation, no end-to-end encryption (use TLS), and no spam or sybil defense. In exchange, a basic server is about a hundred lines of code and works with any Apron client, and a stateless bot is a few lines. Protocol version 8, beta, core stable, MIT licensed.
+
+When Apron is a good fit:
+
+- You need a custom, self-hosted group chat, and want existing clients to work with it.
+- You are building a bot, bridge, coding harness, or agent runtime that people should be able to chat with from any client.
+- You want to stream live output (logs, LLM tokens) into a chat message (capability `embed:stream`).
+- You want an implementation an LLM can write from the spec in one pass.
+
+When Apron is not a good fit:
+
+- You need federation across servers or a global identity network (consider Matrix or XMPP).
+- You need end-to-end encryption between users.
+- You run large public communities that need spam and sybil resistance.
+
+Key design points:
+
+- Frames are JSON-RPC 2.0 shaped (`method`, `params`, `id`, `result`, `error`) without the `jsonrpc` key; every `id` is a string. One WebSocket text message or one NDJSON line per frame.
+- On connect the server sends a `server` frame listing `apron` (version), `auth` schemes, and `capabilities`. The client does not send a hello.
+- Auth schemes: `guest`, `token` (bearer, the reference default), and optional `webauthn` (passkeys) and `email`. `auth` is a barrier, so clients may pipeline requests after it.
+- Every change has a `log_id` (Unix epoch ms, strictly increasing per server). Messages are complete snapshots; clients keep the snapshot with the greatest `log_id` per `message_id`, from any source, in any order.
+- The mandatory core (spec §3) is: greeting, auth, identity, rooms as logs, messages. Everything else is an optional capability with a defined client fallback: `command`, `rooms`, `history`, `edit`, `status`, `activity`, `reactions`, `embed:upload`, `embed:stream`, `ext`. Nothing is negotiated.
+- Retries reuse the same `id`; servers deduplicate by `(user_id, id)`.
+- Custom names start with `ext:`.
+
+## Specification
+
+- [PROTOCOL.md](https://raw.githubusercontent.com/shazow/apron/main/PROTOCOL.md): the authoritative, self-contained specification (Markdown).
+- [HISTORY.md](https://raw.githubusercontent.com/shazow/apron/main/HISTORY.md): changes by protocol version.
+- [apron.schema.json](https://raw.githubusercontent.com/shazow/apron/main/schema/apron.schema.json): informative JSON Schema of every frame.
+- [Conformance fixtures](https://github.com/shazow/apron/tree/main/tests/fixtures): wire sessions and replay cases to test implementations against.
+- [README.md](https://raw.githubusercontent.com/shazow/apron/main/README.md): goals, assumptions, and tradeoffs.
+
+## Implementations
+
+- [python-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/python-minimal/apron_server.py): single-file Python server (one room, guests, history).
+- [js-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/js-minimal/apron-server.js): single-file Bun server, no dependencies.
+- [apron-server-go](https://github.com/apron-chat/apron-server-go): more complete reference server for self-hosting.
+- [apron-server-cloudflare](https://github.com/apron-chat/apron-server-cloudflare): demo server on Cloudflare Workers (wss://server.apron.chat/).
+- [apron-web](https://github.com/apron-chat/apron-web): SvelteKit web client, deployed at https://web.apron.chat/.
+- [apron-pr-bot](https://github.com/apron-chat/apron-pr-bot): GitHub pull request bot.
+
+## Optional
+
+- [Website](https://apron.chat/): human-oriented overview.
+- [Source repository](https://github.com/shazow/apron)
