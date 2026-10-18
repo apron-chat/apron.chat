@@ -65,8 +65,7 @@
 <p>Chat on the public demo server, or point your own client at it.</p>
 <div class="demo">
 <figure class="window">
-<div class="bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>web.apron.chat</span></div>
-<a href="https://web.apron.chat/"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></a>
+<button type="button" class="zoom" aria-label="View the screenshot full size"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button>
 </figure>
 <aside>
 <a class="button" href="https://web.apron.chat/">Open web.apron.chat</a>
@@ -111,6 +110,16 @@
 <span><a href="/protocol">protocol</a> · <a href="/llms.txt">llms.txt</a> · <a href="https://github.com/shazow/apron">shazow/apron</a> · <a href="https://github.com/apron-chat">apron-chat</a></span>
 </div>
 </footer>
+
+<dialog class="lightbox" aria-label="Screenshot of the Apron web client, full size">
+<form method="dialog"><button aria-label="Close"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button></form>
+</dialog>
+<script>
+// The screenshot opens full size; a click anywhere or Escape closes it.
+const lightbox = document.querySelector(".lightbox");
+document.querySelector(".zoom").addEventListener("click", () => lightbox.showModal());
+lightbox.addEventListener("click", event => { if (event.target === lightbox) lightbox.close(); });
+</script>
 
 </body>
 </html>
