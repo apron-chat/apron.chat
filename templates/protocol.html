@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apron Chat Protocol: specification</title>
+<meta name="description" content="The Apron Chat Protocol specification, version {{version}}.">
+<link rel="icon" href="/apron-logo.svg" type="image/svg+xml">
+<link rel="alternate" type="text/markdown" href="/protocol.md" title="Apron Chat Protocol specification">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+
+<header class="top">
+<nav aria-label="Primary">
+<a href="/">home</a>
+<a href="/#demo">demo</a>
+<a href="/#servers">servers</a>
+<a href="/#clients">clients</a>
+<a class="strong" href="https://github.com/shazow/apron">github</a>
+</nav>
+</header>
+
+<main class="wrap doc">
+
+<nav class="toc" aria-label="Contents">
+<details open>
+<summary>Contents</summary>
+{{toc}}
+</details>
+</nav>
+<script>
+// On narrow screens the contents sit above the spec, so start them folded.
+if (matchMedia("(max-width: 899px)").matches) document.querySelector(".toc details").open = false;
+</script>
+
+<article class="prose">
+<p class="source">Rendered from <a href="{{source_url}}">shazow/apron@{{source}}</a> · <a href="/protocol.md">Markdown</a></p>
+{{content}}
+</article>
+
+</main>
+
+<footer>
+<div class="wrap">
+<span>Apron Chat Protocol · v{{version}} · MIT</span>
+<span><a href="/">apron.chat</a> · <a href="https://github.com/shazow/apron">shazow/apron</a> · <a href="https://github.com/apron-chat">apron-chat</a></span>
+</div>
+</footer>
+
+</body>
+</html>

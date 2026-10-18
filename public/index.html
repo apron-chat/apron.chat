@@ -5,130 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Apron Chat Protocol</title>
 <meta name="description" content="A simple chat protocol for small, trusted groups. A server in ~100 lines. A bot in a few.">
-<link rel="icon" href="apron-logo.svg" type="image/svg+xml">
+<link rel="icon" href="/apron-logo.svg" type="image/svg+xml">
+<link rel="alternate" type="text/markdown" href="/protocol.md" title="Apron Chat Protocol specification">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
-<style>
-:root {
-  --paper: #fafaf8;
-  --ink: #1a1a1a;
-  --muted: #55554f;
-  --code-bg: #f1f0ea;
-  --chip: #eceae2;
-  --rule: #d9d7ce;
-  --accent: #a33e0c;
-  --server: #1f5a9e;
-  --scaffold: #6e6c64;
-  --id-bg: #e0ddd0;
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body {
-  margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 15px/1.65 "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-}
-a { color: var(--accent); }
-a:hover { color: var(--ink); }
-code { background: var(--chip); padding: 1px 5px; font: inherit; font-size: 0.92em; }
-h1, h2, h3, p { margin: 0; }
-
-.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
-
-header.top { border-bottom: 2px solid var(--ink); }
-header.top nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 28px; padding: 14px 20px; font-size: 14px; }
-header.top nav a { color: var(--ink); }
-header.top nav a.strong { color: var(--accent); font-weight: 700; }
-
-.hero { padding: 64px 0 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 32px 48px; }
-.hero img { width: 160px; height: 160px; flex: 0 0 auto; }
-.hero div { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.hero h1 { font-size: clamp(30px, 4.6vw, 46px); line-height: 1.1; }
-.hero .lead { font-size: 17px; max-width: 560px; }
-.meta { font-size: 13px; color: var(--muted); }
-
-section.part { padding-top: 88px; display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 16px; }
-section.part:first-of-type { padding-top: 72px; }
-section.part h2 { font-size: 22px; line-height: 1.3; display: flex; gap: 14px; }
-section.part h2 span { color: var(--accent); }
-section.part > p { max-width: 680px; }
-
-.code {
-  background: var(--code-bg);
-  border: 1px solid var(--ink);
-  box-shadow: 4px 4px 0 var(--rule);
-  padding: 18px 20px;
-  overflow-x: auto;
-  font-size: 13px;
-  line-height: 1.7;
-  margin: 0;
-}
-/* Payloads: the JSON scaffolding is dimmed so the parts that matter stand out. */
-.code .dir { display: inline-block; min-width: 10ch; margin-right: 1ch; font-weight: 700; color: var(--server); }
-.code .dir.client { color: var(--accent); }
-.code .k { color: var(--scaffold); }
-.code .s { color: #3a3a36; }
-.code .v { color: var(--ink); font-weight: 700; }
-.code .id { color: var(--ink); font-weight: 700; background: var(--id-bg); padding: 0 3px; }
-.code .m { color: var(--server); font-weight: 700; }
-.code .m.client { color: var(--accent); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 12px; color: var(--muted); }
-.legend b.client { color: var(--accent); }
-.legend b.server { color: var(--server); }
-.legend .id { color: var(--ink); font-weight: 700; background: var(--id-bg); padding: 0 3px; }
-.legend .v { color: var(--ink); font-weight: 700; }
-
-.links { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 6px; }
-.links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--ink); }
-.links a.button, a.button {
-  padding: 0 20px;
-  background: var(--accent);
-  color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-  border: 2px solid var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
-}
-a.button:hover { background: var(--ink); color: #fff; }
-
-.demo { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
-.window { flex: 999 1 560px; min-width: 0; margin: 0; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); background: #fff; }
-.window .bar { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 2px solid var(--ink); background: var(--chip); font-size: 13px; }
-.window .bar .dots { display: flex; gap: 6px; }
-.window .bar .dots i { width: 10px; height: 10px; border: 1.5px solid var(--ink); display: block; }
-.window .bar span { flex: 1 1 auto; text-align: center; font-weight: 500; }
-.window a, .window img { display: block; }
-.window img { width: 100%; height: auto; }
-.demo aside { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 16px; align-items: flex-start; }
-.demo aside a.button { display: inline-flex; align-items: center; min-height: 44px; }
-.demo aside .label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 4px; }
-.demo aside code { display: inline-block; font-size: 14px; padding: 6px 10px; border: 1px solid var(--rule); }
-
-.cards { display: flex; flex-wrap: wrap; gap: 18px; align-items: stretch; }
-.card { flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px solid var(--ink); background: #fff; color: var(--ink); text-decoration: none; }
-a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
-.card .tag { align-self: flex-start; font-size: 12px; padding: 1px 8px; border: 1px solid var(--ink); }
-.card .name { font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
-.card .desc { font-size: 14px; }
-.card.yours { flex: 2 1 460px; border-style: dashed; background: transparent; }
-.card.yours .name { color: var(--ink); }
-.card.yours .code { box-shadow: none; border: 0; padding: 12px 14px; font-size: 12px; }
-
-footer { margin-top: 88px; border-top: 2px solid var(--ink); }
-footer .wrap { padding: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 13px; color: var(--muted); }
-footer a { color: var(--muted); }
-</style>
+<link rel="stylesheet" href="/site.css">
 </head>
 <body>
 
 <header class="top">
 <nav aria-label="Primary">
-<a href="#protocol">protocol</a>
-<a href="#demo">demo</a>
-<a href="#servers">servers</a>
-<a href="#clients">clients</a>
+<a href="/protocol">protocol</a>
+<a href="/#demo">demo</a>
+<a href="/#servers">servers</a>
+<a href="/#clients">clients</a>
 <a class="strong" href="https://github.com/shazow/apron">github</a>
 </nav>
 </header>
@@ -136,7 +27,7 @@ footer a { color: var(--muted); }
 <main class="wrap">
 
 <div class="hero">
-<img src="apron-logo.svg" alt="Apron logo: a smiling orange apron">
+<img src="/apron-logo.svg" alt="Apron logo: a smiling orange apron">
 <div>
 <h1>Apron Chat Protocol</h1>
 <p class="lead">A simple chat protocol for small, trusted groups. A server in ~100 lines. A bot in a few.</p>
@@ -147,19 +38,21 @@ footer a { color: var(--muted); }
 <section class="part" id="protocol">
 <h2><span>1.</span>The Protocol</h2>
 <p>JSON frames over a WebSocket. The server is the authority. No federation. A small core, and optional capabilities that each come with a fallback.</p>
-<pre class="code"><span class="dir">&lt;- server</span><span class="k">{"method": </span><span class="m">"server"</span><span class="k">, "params": {"apron": </span><span class="s">8</span><span class="k">, "auth": [</span><span class="v">"guest"</span><span class="k">]}}</span>
-<span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"auth"</span><span class="k">, "id": </span><span class="id">"c1"</span><span class="k">, "params": {"scheme": </span><span class="v">"guest"</span><span class="k">, "name": </span><span class="v">"Ada"</span><span class="k">}}</span>
-<span class="dir">&lt;- server</span><span class="k">{"id": </span><span class="id">"c1"</span><span class="k">, "result": {"you": {"user_id": </span><span class="s">"guest_1234"</span><span class="k">, "name": </span><span class="v">"Ada"</span><span class="k">}}}</span>
-<span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"message"</span><span class="k">, "id": </span><span class="id">"c2"</span><span class="k">, "params": {"body": {"text": </span><span class="v">"Hello"</span><span class="k">}}}</span>
-<span class="dir">&lt;- server</span><span class="k">{"method": </span><span class="m">"message"</span><span class="k">, "params": {"room_id": </span><span class="s">"general"</span><span class="k">, "from": {"user_id": </span><span class="s">"guest_1234"</span><span class="k">}, ...}}</span>
-<span class="dir">&lt;- server</span><span class="k">{"id": </span><span class="id">"c2"</span><span class="k">, "result": {"message_id": </span><span class="s">"1724803200042"</span><span class="k">}}</span></pre>
+<pre class="code">
+<span class="server">{"method": <b>"server"</b>, "params": {"apron": 8, "auth": [<strong>"guest"</strong>]}}</span>
+<span class="client">{"method": <b>"auth"</b>, "id": <mark>"c1"</mark>, "params": {"scheme": <strong>"guest"</strong>, "name": <strong>"Ada"</strong>}}</span>
+<span class="server">{"id": <mark>"c1"</mark>, "result": {"you": {"user_id": "guest_1234", "name": <strong>"Ada"</strong>}}}</span>
+<span class="client">{"method": <b>"message"</b>, "id": <mark>"c2"</mark>, "params": {"body": {"text": <strong>"Hello"</strong>}}}</span>
+<span class="server">{"method": <b>"message"</b>, "params": {"room_id": "general", "from": {"user_id": "guest_1234"}, ...}}</span>
+<span class="server">{"id": <mark>"c2"</mark>, "result": {"message_id": "1724803200042"}}</span>
+</pre>
 <p class="legend">
 <span><b class="client">client -&gt;</b> / <b class="server">&lt;- server</b> who sends it, and the method in the same color</span>
-<span><span class="id">"c1"</span> request id, matched to its reply</span>
-<span><span class="v">"Ada"</span> what the user sees</span>
+<span><mark>"c1"</mark> request id, matched to its reply</span>
+<span><strong>"Ada"</strong> what the user sees</span>
 </p>
 <div class="links">
-<a class="button" href="https://github.com/shazow/apron/blob/main/PROTOCOL.md">Read PROTOCOL.md</a>
+<a class="button" href="/protocol">Read the protocol</a>
 <a href="https://github.com/shazow/apron/blob/main/schema/apron.schema.json">JSON Schema</a>
 <a href="https://github.com/shazow/apron/tree/main/tests/fixtures">Test fixtures</a>
 <a href="https://github.com/shazow/apron/blob/main/HISTORY.md">History</a>
@@ -172,7 +65,7 @@ footer a { color: var(--muted); }
 <div class="demo">
 <figure class="window">
 <div class="bar"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>web.apron.chat</span></div>
-<a href="https://web.apron.chat/"><img src="images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></a>
+<a href="https://web.apron.chat/"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></a>
 </figure>
 <aside>
 <a class="button" href="https://web.apron.chat/">Open web.apron.chat</a>
@@ -201,8 +94,10 @@ footer a { color: var(--muted); }
 <div class="card yours">
 <span class="tag">your bot</span>
 <span class="name">Two frames to post</span>
-<pre class="code"><span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"auth"</span><span class="k">, "id": </span><span class="id">"c1"</span><span class="k">, "params": {"scheme": </span><span class="v">"token"</span><span class="k">, "token": </span><span class="v">"..."</span><span class="k">}}</span>
-<span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"message"</span><span class="k">, "id": </span><span class="id">"c2"</span><span class="k">, "params": {"body": {"text": </span><span class="v">"Deployed v1.4.2"</span><span class="k">}}}</span></pre>
+<pre class="code">
+<span class="client">{"method": <b>"auth"</b>, "id": <mark>"c1"</mark>, "params": {"scheme": <strong>"token"</strong>, "token": "..."}}</span>
+<span class="client">{"method": <b>"message"</b>, "id": <mark>"c2"</mark>, "params": {"body": {"text": <strong>"Deployed v1.4.2"</strong>}}}</span>
+</pre>
 </div>
 </div>
 </section>
@@ -212,7 +107,7 @@ footer a { color: var(--muted); }
 <footer>
 <div class="wrap">
 <span>Apron Chat Protocol · v8 · MIT</span>
-<span><a href="https://github.com/shazow/apron">shazow/apron</a> · <a href="https://github.com/apron-chat">apron-chat</a></span>
+<span><a href="/protocol">protocol</a> · <a href="https://github.com/shazow/apron">shazow/apron</a> · <a href="https://github.com/apron-chat">apron-chat</a></span>
 </div>
 </footer>
 
