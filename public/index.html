@@ -31,14 +31,14 @@
 <img src="/apron-logo.svg" alt="Apron logo: a smiling orange apron">
 <div>
 <h1>Apron Chat Protocol</h1>
-<p class="lead">A simple chat protocol for small, trusted groups. A server in ~100 lines. A bot in a few.</p>
+<p class="lead">A simple protocol for self-hosting small chat groups. Write a basic server in ~100 lines, or a bot in a few lines.</p>
 <p class="meta">v8 · beta, core stable · MIT</p>
 </div>
 </div>
 
 <section class="part" id="protocol">
 <h2><span>1.</span>The Protocol</h2>
-<p>JSON frames over a WebSocket. The server is the authority. No federation. A small core, and optional capabilities that each come with a fallback.</p>
+<p>JSON over any transport, like WebSocket. The server is the authority. A small core, and optional incremental capabilities with graceful fallbacks.</p>
 <pre class="code">
 <span class="server">{"method": <b>"server"</b>, "params": {"apron": 8, "auth": [<strong>"guest"</strong>]}}</span>
 <span class="client">{"method": <b>"auth"</b>, "id": <mark>"c1"</mark>, "params": {"scheme": <strong>"guest"</strong>, "name": <strong>"Ada"</strong>}}</span>
@@ -62,7 +62,7 @@
 
 <section class="part" id="demo">
 <h2><span>2.</span>Live Demo</h2>
-<p>Chat on the public demo server, or point your own client at it.</p>
+<p>Chat on the public demo server with restricted functionality, or point your own client at it.</p>
 <div class="demo">
 <figure class="window">
 <button type="button" class="zoom" aria-label="View the screenshot full size"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button>
@@ -76,7 +76,7 @@
 
 <section class="part" id="servers">
 <h2><span>3.</span>Servers</h2>
-<p>Run one, or read one and write your own.</p>
+<p>Run one, read one, or write your own.</p>
 <div class="cards">
 <a class="card" href="https://github.com/apron-chat/apron-server-go"><span class="tag">Go</span><span class="name">apron-server-go</span><span class="desc">Reference server for self-hosting. Every capability.</span></a>
 <a class="card" href="https://github.com/apron-chat/apron-server-cloudflare"><span class="tag">TypeScript · Worker</span><span class="name">apron-server-cloudflare</span><span class="desc">Runs the public demo on the Cloudflare free tier.</span></a>
