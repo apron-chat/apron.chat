@@ -2,7 +2,10 @@
 
 apron.chat website: a static landing page for the [Apron Chat Protocol](https://github.com/shazow/apron).
 
-- `public/` is the site. `index.html` and `site.css` are hand-edited.
+- `public/` is the site. `site.css` is hand-edited. The landing page is
+  hand-edited in `templates/index.html`, and `npm run build` writes it to
+  `public/index.html` with the protocol version from PROTOCOL.md filled in for
+  `{{version}}`.
 - `/protocol` is [PROTOCOL.md](https://github.com/shazow/apron/blob/main/PROTOCOL.md)
   from shazow/apron, rendered into `public/protocol.html` by `npm run build`
   with `templates/protocol.html` as its page. The raw Markdown is served at
@@ -29,6 +32,11 @@ npx wrangler dev        # runs npm run build, then serves http://localhost:8787
 `npm run build` renders the spec from shazow/apron's `main`. Set `APRON_REF`
 to render another branch, tag or commit, or `APRON_PROTOCOL=../apron/PROTOCOL.md`
 to render a local copy.
+
+The build fails, before writing anything, if it can't fetch the spec or
+resolve the ref, if the spec has no sections or `| Protocol Version | N |`
+row, or if a template has a `{{placeholder}}` it has no value for. Workers
+Builds then keeps the last good deploy.
 
 ## Protocol frames
 
