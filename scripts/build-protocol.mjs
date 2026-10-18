@@ -6,6 +6,9 @@
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
 // APRON_PROTOCOL renders a local file instead, such as ../apron/PROTOCOL.md.
+//
+// Anything missing fails the build before it writes a file, so a deploy keeps
+// the last good site rather than publishing a broken one.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -21,7 +24,7 @@ async function get(url) {
   return response.text();
 }
 
-// The spec and where it came from, pinned to a commit when GitHub says which.
+// The spec and where it came from, pinned to a commit.
 async function source() {
   if (process.env.APRON_PROTOCOL) {
     const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
@@ -30,15 +33,12 @@ async function source() {
   }
   const ref = process.env.APRON_REF || "main";
   // git, not the GitHub API, which rate-limits shared build machines.
-  let commit = ref;
-  try {
-    const refs = new Map(execFileSync("git", ["ls-remote", `https://github.com/${repo}`], { encoding: "utf8" })
-      .trim().split("\n").map(line => line.split("\t").reverse()));
-    // A branch or tag by its exact name (an annotated tag by its commit); a commit as given.
-    commit = refs.get(`refs/heads/${ref}`) ?? refs.get(`refs/tags/${ref}^{}`) ?? refs.get(`refs/tags/${ref}`) ?? ref;
-  } catch (error) {
-    console.warn(`Rendering ${ref} unpinned: ${error.message}`);
-  }
+  const refs = new Map(execFileSync("git", ["ls-remote", `https://github.com/${repo}`], { encoding: "utf8" })
+    .trim().split("\n").map(line => line.split("\t").reverse()));
+  // A branch or tag by its exact name (an annotated tag by its commit); a commit as given.
+  const commit = refs.get(`refs/heads/${ref}`) ?? refs.get(`refs/tags/${ref}^{}`) ?? refs.get(`refs/tags/${ref}`) ??
+    (/^[0-9a-f]{7,40}$/.test(ref) ? ref : undefined);
+  if (!commit) throw new Error(`No branch, tag or commit named ${ref} in ${repo}`);
   const raw = file => get(`https://raw.githubusercontent.com/${repo}/${commit}/${file}`);
   const [markdown, history] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md")]);
   const label = /^[0-9a-f]{40}$/.test(commit) ? commit.slice(0, 7) : commit;
@@ -48,6 +48,7 @@ async function source() {
 function render(markdown) {
   let html = new Marked(gfmHeadingId()).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
+  if (!headings.some(heading => heading.level === 2)) throw new Error("No sections (## headings) in PROTOCOL.md");
 
   // A link on each section heading to share it, and on top-level sections a
   // link back to the contents.
@@ -72,10 +73,10 @@ function render(markdown) {
     ? `<li>${item(heading)}\n<ol>\n${children.map(child => `<li class="l${child.level}">${item(child)}</li>`).join("\n")}\n</ol></li>`
     : `<li>${item(heading)}</li>`);
 
-  // The contents go after the title and version table, before the introduction
-  // (or first, if the spec has no table).
+  // The contents go after the title and version table, before the introduction.
   const table = html.indexOf("</table></div>");
-  const split = table < 0 ? 0 : table + "</table></div>".length;
+  if (table < 0) throw new Error("No version table at the top of PROTOCOL.md");
+  const split = table + "</table></div>".length;
   return { head: html.slice(0, split), html: html.slice(split), toc: `<ol class="toc">\n${toc.join("\n")}\n</ol>` };
 }
 
@@ -84,14 +85,21 @@ const { head, html, toc } = render(markdown);
 // The version table at the top of the spec. Fail rather than publish a page without it.
 const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!version) throw new Error(`No "| Protocol Version | N |" row in PROTOCOL.md at ${label}`);
+if (!history.trim()) throw new Error(`HISTORY.md at ${label} is empty`);
 const values = { head, content: html, toc, version, source: label, source_url: url };
-const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? "");
-
-writeFileSync(at("public/protocol.html"), fill("protocol.html"));
-writeFileSync(at("public/index.html"), fill("index.html"));
-writeFileSync(at("public/protocol.md"), markdown);
+// A placeholder with no value is a typo in the template, or a value the build failed to make.
+const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => {
+  if (!values[key]) throw new Error(`templates/${template}: no value for {{${key}}}`);
+  return values[key];
+});
 // llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
 const index = readFileSync(at("public/llms.txt"), "utf8").trimEnd();
 const note = `Rendered from ${url}`;
-writeFileSync(at("public/llms-full.txt"), [index, `<!-- ${note} -->`, markdown.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n");
+const files = {
+  "public/protocol.html": fill("protocol.html"),
+  "public/index.html": fill("index.html"),
+  "public/protocol.md": markdown,
+  "public/llms-full.txt": [index, `<!-- ${note} -->`, markdown.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
+};
+for (const [path, text] of Object.entries(files)) writeFileSync(at(path), text);
 console.log(`Rendered PROTOCOL.md v${version} from ${repo}@${label} into public/protocol.html`);

@@ -33,6 +33,11 @@ npx wrangler dev        # runs npm run build, then serves http://localhost:8787
 to render another branch, tag or commit, or `APRON_PROTOCOL=../apron/PROTOCOL.md`
 to render a local copy.
 
+The build fails, before writing anything, if it can't fetch the spec or
+resolve the ref, if the spec has no sections or `| Protocol Version | N |`
+row, or if a template has a `{{placeholder}}` it has no value for. Workers
+Builds then keeps the last good deploy.
+
 ## Protocol frames
 
 The frame examples on the landing page are plain JSON with a little markup, so
