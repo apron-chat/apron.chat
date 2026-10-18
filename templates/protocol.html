@@ -31,6 +31,7 @@
 <summary>Contents</summary>
 {{toc}}
 </details>
+<a class="top" href="#">↑ top</a>
 </nav>
 <script>
 // On narrow screens the contents sit above the spec, so start them folded.
@@ -50,6 +51,39 @@ if (matchMedia("(max-width: 899px)").matches) document.querySelector(".toc detai
 <span><a href="/">apron.chat</a> · <a href="/llms.txt">llms.txt</a> · <a href="https://github.com/shazow/apron">shazow/apron</a> · <a href="https://github.com/apron-chat">apron-chat</a></span>
 </div>
 </footer>
+
+<script>
+// The contents show the top-level sections. Mark the one being read: its
+// subsections unfold, and the current subsection is highlighted.
+(() => {
+  const toc = document.querySelector(".toc");
+  const links = new Map([...toc.querySelectorAll('a[href^="#"]')].map(a => [a.hash.slice(1), a]));
+  const headings = [...document.querySelectorAll(".prose h2[id], .prose h3[id]")].filter(h => links.has(h.id));
+  let shown = null;
+  function update() {
+    let section = null, subsection = null;
+    for (const heading of headings) {
+      if (heading.getBoundingClientRect().top > 96) break;
+      if (heading.tagName === "H2") [section, subsection] = [heading, null];
+      else subsection = heading;
+    }
+    const current = subsection ?? section;
+    if (current === shown) return;
+    shown = current;
+    toc.querySelectorAll("li.open").forEach(li => li.classList.remove("open"));
+    toc.querySelectorAll("[aria-current]").forEach(a => a.removeAttribute("aria-current"));
+    if (section) links.get(section.id).parentElement.classList.add("open");
+    if (current) links.get(current.id).setAttribute("aria-current", "location");
+  }
+  let queued = false;
+  addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; update(); });
+  }, { passive: true });
+  update();
+})();
+</script>
 
 </body>
 </html>

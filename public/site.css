@@ -120,16 +120,29 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 /* The spec: /protocol, rendered from PROTOCOL.md */
 
 .doc { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 32px 48px; padding-top: 48px; }
-.doc .toc { flex: 1 1 240px; min-width: 0; font-size: 13px; line-height: 1.5; border: 1px solid var(--ink); background: #fff; padding: 14px 16px; }
-.doc .toc summary { font-weight: 700; cursor: pointer; }
-.doc .toc ol { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.doc .toc a { color: var(--ink); text-decoration: none; }
-.doc .toc a:hover { color: var(--accent); text-decoration: underline; }
-.doc .toc .l3 { padding-left: 2ch; }
-.doc .toc .l4 { padding-left: 4ch; color: var(--muted); }
-.doc .toc code { background: none; padding: 0; }
+.doc .toc { flex: 1 1 230px; min-width: 0; font-size: 13px; line-height: 1.5; }
+.doc .toc summary { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; }
+.doc .toc ol { list-style: none; margin: 0; padding: 0; }
+.doc .toc .sections { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.doc .toc a { display: flex; gap: 8px; padding: 3px 8px; color: var(--ink); text-decoration: none; }
+.doc .toc a:hover { text-decoration: underline; }
+.doc .toc code { background: none; padding: 0; font-size: inherit; }
+/* Top-level sections, with a marker that turns when the section is open. */
+.doc .toc .sections > li > a { font-weight: 700; }
+.doc .toc .sections > li > a::before { content: "▸"; flex: 0 0 1ch; color: var(--muted); }
+.doc .toc .sections > li.open > a::before { content: "▾"; }
+/* Subsections show only under the section being read. */
+.doc .toc .sections ol { display: none; padding: 2px 0 6px 18px; }
+.doc .toc .sections li.open > ol { display: block; }
+.doc .toc .sections ol a { color: #3a3a36; }
+.doc .toc .sections a[aria-current] { color: var(--accent); font-weight: 700; background: var(--chip); }
+.doc .toc .top { display: inline-block; margin-top: 14px; padding: 0 8px; font-size: 12px; color: var(--muted); }
 @media (min-width: 900px) {
-  .doc .toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+  .doc .toc { flex: 0 0 230px; }
+}
+/* Pinned beside the spec only where it fits without scrolling on its own. */
+@media (min-width: 900px) and (min-height: 640px) {
+  .doc .toc { position: sticky; top: 16px; }
 }
 .doc .source { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 

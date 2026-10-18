@@ -46,7 +46,7 @@ async function source() {
 
 function render(markdown) {
   let html = new Marked(gfmHeadingId()).parse(markdown);
-  const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
+  const headings = getHeadingList().filter(heading => heading.level === 2 || heading.level === 3);
 
   // A link on each section heading, to share it.
   html = html.replace(/<h([2-4]) id="([^"]+)">([\s\S]*?)<\/h\1>/g,
@@ -57,8 +57,18 @@ function render(markdown) {
   html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_, attrs, code) =>
     `<pre><code${attrs}>${code.replace(/(^|\s)(\/\/(?: .*)?)$/gm, '$1<span class="c">$2</span>')}</code></pre>`);
 
-  const toc = headings.map(heading => `<li class="l${heading.level}"><a href="#${heading.id}">${heading.text}</a></li>`);
-  return { html, toc: `<ol>\n${toc.join("\n")}\n</ol>` };
+  // The contents: each top-level section, with its subsections nested under it.
+  // "Appendix A — Conventions (informative)" is listed as "A. Conventions".
+  const item = heading => `<a href="#${heading.id}">${heading.text.replace(/^Appendix ([A-Z]) — (.*?)(?: \(informative\))?$/, "$1. $2")}</a>`;
+  const sections = [];
+  for (const heading of headings) {
+    if (heading.level === 2) sections.push({ heading, children: [] });
+    else sections.at(-1)?.children.push(heading);
+  }
+  const toc = sections.map(({ heading, children }) => children.length
+    ? `<li>${item(heading)}\n<ol>\n${children.map(child => `<li>${item(child)}</li>`).join("\n")}\n</ol></li>`
+    : `<li>${item(heading)}</li>`);
+  return { html, toc: `<ol class="sections">\n${toc.join("\n")}\n</ol>` };
 }
 
 const { markdown, history, label, url } = await source();
