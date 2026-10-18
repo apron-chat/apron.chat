@@ -68,6 +68,16 @@
 <div><span class="label">server</span><code>wss://server.apron.chat/</code></div>
 </aside>
 </div>
+<div class="shots">
+<figure class="shot">
+<button type="button" class="zoom" aria-label="View full size: a coding agent streaming its test run"><img src="/images/demo-agent.png" width="1280" height="760" loading="lazy" alt="A coding agent, Patch, in a thread: a finished test run that reproduced a bug, and a live terminal still running the full suite"></button>
+<figcaption><b>Coding agents.</b> A bot streams its terminal into a thread, live, with <code>embed:stream</code>.</figcaption>
+</figure>
+<figure class="shot">
+<button type="button" class="zoom" aria-label="View full size: rich messages"><img src="/images/demo-rich.png" width="1280" height="760" loading="lazy" alt="A Design room with an uploaded sticker sheet, a mention, a link preview card, reactions, and someone typing"></button>
+<figcaption><b>Rich messages.</b> Uploads, link previews, mentions, reactions and typing.</figcaption>
+</figure>
+</div>
 </section>
 
 <section class="part" id="servers">
@@ -107,13 +117,21 @@
 </div>
 </footer>
 
-<dialog class="lightbox" aria-label="Screenshot of the Apron web client, full size">
-<form method="dialog"><button aria-label="Close"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button></form>
+<dialog class="lightbox" aria-label="Screenshot, full size">
+<form method="dialog"><button aria-label="Close"><img src="/images/demo.png" width="1280" height="760" alt=""></button></form>
 </dialog>
 <script>
-// The screenshot opens full size; a click anywhere or Escape closes it.
+// A screenshot opens full size; a click anywhere or Escape closes it.
 const lightbox = document.querySelector(".lightbox");
-document.querySelector(".zoom").addEventListener("click", () => lightbox.showModal());
+const full = lightbox.querySelector("img");
+for (const zoom of document.querySelectorAll(".zoom")) {
+  zoom.addEventListener("click", () => {
+    const shot = zoom.querySelector("img");
+    full.src = shot.src;
+    full.alt = shot.alt;
+    lightbox.showModal();
+  });
+}
 lightbox.addEventListener("click", event => { if (event.target === lightbox) lightbox.close(); });
 </script>
 
