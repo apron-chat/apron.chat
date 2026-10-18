@@ -1,5 +1,5 @@
 // Takes the Live Demo screenshot: starts the fixture server, opens an Apron
-// web client against it, and saves images/demo.png.
+// web client against it, and saves public/images/demo.png.
 // Run: npm run screenshot
 //
 // CLIENT_URL picks the client (default https://web.apron.chat/, or a local
@@ -13,7 +13,7 @@ import { chromium } from "playwright";
 const here = fileURLToPath(new URL(".", import.meta.url));
 const port = process.env.PORT || "8765";
 const clientUrl = process.env.CLIENT_URL || "https://web.apron.chat/";
-const output = fileURLToPath(new URL("../images/demo.png", import.meta.url));
+const output = fileURLToPath(new URL("../public/images/demo.png", import.meta.url));
 
 const server = spawn("bun", [`${here}fixture-server.js`, "--port", port], { stdio: "inherit" });
 const stop = () => server.kill();
