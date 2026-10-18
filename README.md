@@ -6,7 +6,13 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
 - `/protocol` is [PROTOCOL.md](https://github.com/shazow/apron/blob/main/PROTOCOL.md)
   from shazow/apron, rendered into `public/protocol.html` by `npm run build`
   with `templates/protocol.html` as its page. The raw Markdown is served at
-  `/protocol.md`. Both are generated, not committed.
+  `/protocol.md`. These are generated, not committed.
+- `public/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
+  hand-edited. `npm run build` also writes `public/llms-full.txt`: the index,
+  then PROTOCOL.md and HISTORY.md in full.
+- `src/worker.js` serves Markdown to agents that ask for it: `/` and
+  `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
+  and the spec's Markdown. Every other path is a static file.
 - `wrangler.jsonc` deploys it with Cloudflare Workers Builds: `main` goes to
   apron.chat, and each pull request gets a preview URL. The Worker's build
   command is `npm run build`.

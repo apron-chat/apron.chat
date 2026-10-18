@@ -1,5 +1,6 @@
 // Renders PROTOCOL.md from shazow/apron into public/protocol.html, served at
-// /protocol, and copies the Markdown to public/protocol.md.
+// /protocol, and copies the Markdown to public/protocol.md. Also writes
+// public/llms-full.txt: public/llms.txt followed by PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
@@ -22,7 +23,9 @@ async function get(url) {
 // The spec and where it came from, pinned to a commit when GitHub says which.
 async function source() {
   if (process.env.APRON_PROTOCOL) {
-    return { markdown: readFileSync(process.env.APRON_PROTOCOL, "utf8"), label: "local", url: `https://github.com/${repo}` };
+    const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
+    const history = readFileSync(new URL("HISTORY.md", `file://${process.env.APRON_PROTOCOL}`), "utf8");
+    return { markdown, history, label: "local", url: `https://github.com/${repo}` };
   }
   const ref = process.env.APRON_REF || "main";
   // git, not the GitHub API, which rate-limits shared build machines.
@@ -35,9 +38,10 @@ async function source() {
   } catch (error) {
     console.warn(`Rendering ${ref} unpinned: ${error.message}`);
   }
-  const markdown = await get(`https://raw.githubusercontent.com/${repo}/${commit}/PROTOCOL.md`);
+  const raw = file => get(`https://raw.githubusercontent.com/${repo}/${commit}/${file}`);
+  const [markdown, history] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md")]);
   const label = /^[0-9a-f]{40}$/.test(commit) ? commit.slice(0, 7) : commit;
-  return { markdown, label, url: `https://github.com/${repo}/blob/${commit}/PROTOCOL.md` };
+  return { markdown, history, label, url: `https://github.com/${repo}/blob/${commit}/PROTOCOL.md` };
 }
 
 function render(markdown) {
@@ -57,7 +61,7 @@ function render(markdown) {
   return { html, toc: `<ol>\n${toc.join("\n")}\n</ol>` };
 }
 
-const { markdown, label, url } = await source();
+const { markdown, history, label, url } = await source();
 const { html, toc } = render(markdown);
 const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1] ?? "";
 const values = { content: html, toc, version, source: label, source_url: url };
@@ -65,4 +69,8 @@ const page = readFileSync(at("templates/protocol.html"), "utf8").replace(/\{\{(\
 
 writeFileSync(at("public/protocol.html"), page);
 writeFileSync(at("public/protocol.md"), markdown);
+// llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
+const index = readFileSync(at("public/llms.txt"), "utf8").trimEnd();
+const note = `Rendered from ${url}`;
+writeFileSync(at("public/llms-full.txt"), [index, `<!-- ${note} -->`, markdown.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n");
 console.log(`Rendered PROTOCOL.md v${version} from ${repo}@${label} into public/protocol.html`);
