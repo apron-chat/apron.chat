@@ -18,7 +18,9 @@
   --chip: #eceae2;
   --rule: #d9d7ce;
   --accent: #a33e0c;
-  --server: #5f5f58;
+  --server: #1f5a9e;
+  --scaffold: #6e6c64;
+  --id-bg: #e0ddd0;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -63,8 +65,20 @@ section.part > p { max-width: 680px; }
   line-height: 1.7;
   margin: 0;
 }
-.code .dir { font-weight: 700; color: var(--server); margin-right: 12px; }
+/* Payloads: the JSON scaffolding is dimmed so the parts that matter stand out. */
+.code .dir { display: inline-block; min-width: 10ch; margin-right: 1ch; font-weight: 700; color: var(--server); }
 .code .dir.client { color: var(--accent); }
+.code .k { color: var(--scaffold); }
+.code .s { color: #3a3a36; }
+.code .v { color: var(--ink); font-weight: 700; }
+.code .id { color: var(--ink); font-weight: 700; background: var(--id-bg); padding: 0 3px; }
+.code .m { color: var(--server); font-weight: 700; }
+.code .m.client { color: var(--accent); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 12px; color: var(--muted); }
+.legend b.client { color: var(--accent); }
+.legend b.server { color: var(--server); }
+.legend .id { color: var(--ink); font-weight: 700; background: var(--id-bg); padding: 0 3px; }
+.legend .v { color: var(--ink); font-weight: 700; }
 
 .links { display: flex; flex-wrap: wrap; gap: 14px; padding-top: 6px; }
 .links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--ink); }
@@ -133,12 +147,17 @@ footer a { color: var(--muted); }
 <section class="part" id="protocol">
 <h2><span>1.</span>The Protocol</h2>
 <p>JSON frames over a WebSocket. The server is the authority. No federation. A small core, and optional capabilities that each come with a fallback.</p>
-<pre class="code"><span class="dir">&lt;-</span>{"method": "server", "params": {"apron": 8, "auth": ["guest"]}}
-<span class="dir client">-&gt;</span>{"method": "auth", "id": "c1", "params": {"scheme": "guest", "name": "Ada"}}
-<span class="dir">&lt;-</span>{"id": "c1", "result": {"you": {"user_id": "guest_1234", "name": "Ada"}}}
-<span class="dir client">-&gt;</span>{"method": "message", "id": "c2", "params": {"body": {"text": "Hello"}}}
-<span class="dir">&lt;-</span>{"method": "message", "params": {"room_id": "general", "from": {"user_id": "guest_1234"}, ...}}
-<span class="dir">&lt;-</span>{"id": "c2", "result": {"message_id": "1724803200042"}}</pre>
+<pre class="code"><span class="dir">&lt;- server</span><span class="k">{"method": </span><span class="m">"server"</span><span class="k">, "params": {"apron": </span><span class="s">8</span><span class="k">, "auth": [</span><span class="v">"guest"</span><span class="k">]}}</span>
+<span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"auth"</span><span class="k">, "id": </span><span class="id">"c1"</span><span class="k">, "params": {"scheme": </span><span class="v">"guest"</span><span class="k">, "name": </span><span class="v">"Ada"</span><span class="k">}}</span>
+<span class="dir">&lt;- server</span><span class="k">{"id": </span><span class="id">"c1"</span><span class="k">, "result": {"you": {"user_id": </span><span class="s">"guest_1234"</span><span class="k">, "name": </span><span class="v">"Ada"</span><span class="k">}}}</span>
+<span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"message"</span><span class="k">, "id": </span><span class="id">"c2"</span><span class="k">, "params": {"body": {"text": </span><span class="v">"Hello"</span><span class="k">}}}</span>
+<span class="dir">&lt;- server</span><span class="k">{"method": </span><span class="m">"message"</span><span class="k">, "params": {"room_id": </span><span class="s">"general"</span><span class="k">, "from": {"user_id": </span><span class="s">"guest_1234"</span><span class="k">}, ...}}</span>
+<span class="dir">&lt;- server</span><span class="k">{"id": </span><span class="id">"c2"</span><span class="k">, "result": {"message_id": </span><span class="s">"1724803200042"</span><span class="k">}}</span></pre>
+<p class="legend">
+<span><b class="client">client -&gt;</b> / <b class="server">&lt;- server</b> who sends it, and the method in the same color</span>
+<span><span class="id">"c1"</span> request id, matched to its reply</span>
+<span><span class="v">"Ada"</span> what the user sees</span>
+</p>
 <div class="links">
 <a class="button" href="https://github.com/shazow/apron/blob/main/PROTOCOL.md">Read PROTOCOL.md</a>
 <a href="https://github.com/shazow/apron/blob/main/schema/apron.schema.json">JSON Schema</a>
@@ -182,8 +201,8 @@ footer a { color: var(--muted); }
 <div class="card yours">
 <span class="tag">your bot</span>
 <span class="name">Two frames to post</span>
-<pre class="code"><span class="dir client">-&gt;</span>{"method": "auth", "id": "c1", "params": {"scheme": "token", "token": "..."}}
-<span class="dir client">-&gt;</span>{"method": "message", "id": "c2", "params": {"body": {"text": "Deployed v1.4.2"}}}</pre>
+<pre class="code"><span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"auth"</span><span class="k">, "id": </span><span class="id">"c1"</span><span class="k">, "params": {"scheme": </span><span class="v">"token"</span><span class="k">, "token": </span><span class="v">"..."</span><span class="k">}}</span>
+<span class="dir client">client -&gt;</span><span class="k">{"method": </span><span class="m client">"message"</span><span class="k">, "id": </span><span class="id">"c2"</span><span class="k">, "params": {"body": {"text": </span><span class="v">"Deployed v1.4.2"</span><span class="k">}}}</span></pre>
 </div>
 </div>
 </section>
