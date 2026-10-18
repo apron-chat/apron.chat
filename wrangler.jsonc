@@ -1,15 +1,30 @@
 // The apron.chat site: static files in public/, served by the apron-chat
 // Worker. Workers Builds deploys main to apron.chat, and pull requests get
 // Preview URLs at <branch>-apron-chat.shazow.workers.dev.
+//
+// `npm run build` renders /protocol from shazow/apron's PROTOCOL.md. Wrangler
+// runs it for `wrangler dev` and `wrangler deploy`, but Workers Builds ignores
+// this setting: its Build command must also be `npm run build`.
 {
   "name": "apron-chat",
   "compatibility_date": "2026-09-20",
   "workers_dev": false,
   "preview_urls": true,
+  // Pull request builds run `wrangler preview`, which requires this block. It
+  // is empty because Previews need no settings of their own.
+  "previews": {},
   "routes": [
     { "pattern": "apron.chat", "custom_domain": true }
   ],
+  "build": {
+    "command": "npm run build"
+  },
+  // Only / and /protocol run the Worker, to serve Markdown to agents that ask
+  // for it (src/worker.js). Every other path is a static file.
+  "main": "src/worker.js",
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/", "/protocol"]
   }
 }

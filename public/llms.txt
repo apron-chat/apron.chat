@@ -1,0 +1,33 @@
+# Apron Chat Protocol
+
+> Apron is a simple chat protocol for small groups whose members mostly trust each other: a team, a household, or a set of bots and the people who run them. JSON frames over a WebSocket. The server is the authority on identity, membership and history. There is no federation. A basic server is about a hundred lines of code, and a stateless bot is a few.
+
+The protocol is incremental. The mandatory core (PROTOCOL.md §3) is enough for a working chat: a `server` greeting, `auth`, identities, rooms as logs, and `message`. Everything else is an optional capability (§4) that a server advertises in its `server` frame, each with a fallback for clients and servers that lack it. Nothing is negotiated. Frames use the shape of JSON-RPC 2.0 requests, responses and notifications, without the `jsonrpc` key.
+
+To implement Apron, read PROTOCOL.md, start with the core and its conformance checklist (§3.6), then add capabilities as needed. Validate frames against the JSON Schema and test against the wire fixtures.
+
+The full specification is also at https://apron.chat/llms-full.txt, in one file. Requesting https://apron.chat/protocol with `Accept: text/markdown` returns the specification as Markdown.
+
+## Specification
+
+- [PROTOCOL.md](https://apron.chat/protocol.md): The authoritative Apron Chat Protocol definition, current version
+- [HISTORY.md](https://raw.githubusercontent.com/shazow/apron/main/HISTORY.md): Changes by protocol version
+- [JSON Schema](https://raw.githubusercontent.com/shazow/apron/main/schema/apron.schema.json): An informative JSON Schema of every frame, for validation and editor completion
+- [Wire fixtures](https://raw.githubusercontent.com/shazow/apron/main/tests/fixtures/wire/README.md): Portable JSON scenarios that implementations can test against
+
+## Servers
+
+- [python-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/python-minimal/apron_server.py): A single-file core server in Python with capability `history`, a starting point to read or adapt
+- [js-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/js-minimal/apron-server.js): The same in JavaScript for Bun, with no dependencies
+- [apron-server-go](https://github.com/apron-chat/apron-server-go): The Go reference server for self-hosting, implementing every capability
+- [apron-server-cloudflare](https://github.com/apron-chat/apron-server-cloudflare): The public demo server at wss://server.apron.chat/, a Cloudflare Worker with a SQLite Durable Object
+
+## Clients
+
+- [apron-web](https://github.com/apron-chat/apron-web): The SvelteKit web client deployed at https://web.apron.chat
+- [apron-pr-bot](https://github.com/apron-chat/apron-pr-bot): A bot that posts GitHub pull request activity to the demo server
+
+## Optional
+
+- [README](https://raw.githubusercontent.com/shazow/apron/main/README.md): Goals, assumptions, trade-offs and background
+- [Live demo](https://web.apron.chat/): The web client, connected to wss://server.apron.chat/

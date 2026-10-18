@@ -3,10 +3,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node scripts/build-protocol.mjs",
     "screenshot": "node screenshot/capture.mjs",
     "fixture": "bun screenshot/fixture-server.js"
   },
   "devDependencies": {
-    "playwright": "1.56.1"
+    "playwright": "1.56.1",
+    "wrangler": "4.147.0"
+  },
+  "dependencies": {
+    "marked": "15.0.12",
+    "marked-gfm-heading-id": "4.1.1"
   }
 }

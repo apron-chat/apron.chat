@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apron Chat Protocol: specification</title>
+<meta name="description" content="The Apron Chat Protocol specification, version {{version}}.">
+<link rel="icon" href="/apron-logo.svg" type="image/svg+xml">
+<link rel="alternate" type="text/markdown" href="/protocol.md" title="Apron Chat Protocol specification">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+
+<header class="top">
+<nav aria-label="Primary">
+<a href="/">home</a>
+<a href="/#demo">demo</a>
+<a href="/#servers">servers</a>
+<a href="/#clients">clients</a>
+<a class="strong" href="https://github.com/shazow/apron">github</a>
+</nav>
+</header>
+
+<div class="crumbs" aria-label="Where you are">
+<div class="wrap">
+<details>
+<summary><span class="where">Contents</span></summary>
+<nav class="panel" aria-label="Contents">
+{{toc}}
+</nav>
+</details>
+<a class="top" href="#">↑ top</a>
+</div>
+</div>
+
+<main class="wrap doc">
+<article class="prose">
+<p class="source">Rendered from <a href="{{source_url}}">shazow/apron@{{source}}</a> · <a href="/protocol.md">Markdown</a></p>
+{{head}}
+<nav class="contents" id="contents" aria-labelledby="contents-title">
+<p id="contents-title" class="contents-title">Table of Contents</p>
+{{toc}}
+</nav>
+{{content}}
+</article>
+</main>
+
+<footer>
+<div class="wrap">
+<span>Apron Chat Protocol · v{{version}} · MIT</span>
+<span><a href="/">apron.chat</a> · <a href="/llms.txt">llms.txt</a> · <a href="https://github.com/shazow/apron">shazow/apron</a> · <a href="https://github.com/apron-chat">apron-chat</a></span>
+</div>
+</footer>
+
+<script>
+// Once the contents at the top scroll away, a bar shows where you are, and
+// opens the contents again as a dropdown. Without this script, the contents
+// at the top and the "↑ contents" links still work.
+(() => {
+  const bar = document.querySelector(".crumbs");
+  const details = bar.querySelector("details");
+  const where = bar.querySelector(".where");
+  const links = new Map([...bar.querySelectorAll('.panel a[href^="#"]')].map(a => [a.hash.slice(1), a]));
+  const headings = [...document.querySelectorAll(".prose h2[id], .prose h3[id], .prose h4[id]")].filter(h => links.has(h.id));
+  const label = heading => links.get(heading.id).textContent;
+
+  new IntersectionObserver(([entry]) => {
+    const past = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+    bar.classList.toggle("shown", past);
+    if (!past) details.open = false;
+  }).observe(document.querySelector(".contents"));
+
+  let shown;
+  function update() {
+    let section = null, current = null;
+    for (const heading of headings) {
+      if (heading.getBoundingClientRect().top > 80) break;
+      if (heading.tagName === "H2") section = heading;
+      current = heading;
+    }
+    if (current === shown) return;
+    shown = current;
+    bar.querySelectorAll("[aria-current]").forEach(a => a.removeAttribute("aria-current"));
+    if (!current) return void (where.textContent = "Contents");
+    where.textContent = section && section !== current ? `${label(section)} / ${label(current)}` : label(current);
+    links.get(current.id).setAttribute("aria-current", "location");
+  }
+  let queued = false;
+  addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; update(); });
+  }, { passive: true });
+  update();
+
+  // Close the dropdown after choosing a section, on Escape, or on a click elsewhere.
+  bar.addEventListener("click", event => { if (event.target.closest(".panel a")) details.open = false; });
+  addEventListener("keydown", event => { if (event.key === "Escape") details.open = false; });
+  addEventListener("click", event => { if (!bar.contains(event.target)) details.open = false; });
+})();
+</script>
+
+</body>
+</html>
