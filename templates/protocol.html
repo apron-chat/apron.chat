@@ -24,25 +24,28 @@
 </nav>
 </header>
 
-<main class="wrap doc">
-
-<nav class="toc" aria-label="Contents">
-<details open>
-<summary>Contents</summary>
+<div class="crumbs" aria-label="Where you are">
+<div class="wrap">
+<details>
+<summary><span class="where">Contents</span></summary>
+<nav class="panel" aria-label="Contents">
 {{toc}}
+</nav>
 </details>
 <a class="top" href="#">↑ top</a>
-</nav>
-<script>
-// On narrow screens the contents sit above the spec, so start them folded.
-if (matchMedia("(max-width: 899px)").matches) document.querySelector(".toc details").open = false;
-</script>
+</div>
+</div>
 
+<main class="wrap doc">
 <article class="prose">
 <p class="source">Rendered from <a href="{{source_url}}">shazow/apron@{{source}}</a> · <a href="/protocol.md">Markdown</a></p>
+{{head}}
+<nav class="contents" id="contents" aria-labelledby="contents-title">
+<p id="contents-title" class="contents-title">Table of Contents</p>
+{{toc}}
+</nav>
 {{content}}
 </article>
-
 </main>
 
 <footer>
@@ -53,27 +56,37 @@ if (matchMedia("(max-width: 899px)").matches) document.querySelector(".toc detai
 </footer>
 
 <script>
-// The contents show the top-level sections. Mark the one being read: its
-// subsections unfold, and the current subsection is highlighted.
+// Once the contents at the top scroll away, a bar shows where you are, and
+// opens the contents again as a dropdown. Without this script, the contents
+// at the top and the "↑ contents" links still work.
 (() => {
-  const toc = document.querySelector(".toc");
-  const links = new Map([...toc.querySelectorAll('a[href^="#"]')].map(a => [a.hash.slice(1), a]));
-  const headings = [...document.querySelectorAll(".prose h2[id], .prose h3[id]")].filter(h => links.has(h.id));
-  let shown = null;
+  const bar = document.querySelector(".crumbs");
+  const details = bar.querySelector("details");
+  const where = bar.querySelector(".where");
+  const links = new Map([...bar.querySelectorAll('.panel a[href^="#"]')].map(a => [a.hash.slice(1), a]));
+  const headings = [...document.querySelectorAll(".prose h2[id], .prose h3[id], .prose h4[id]")].filter(h => links.has(h.id));
+  const label = heading => links.get(heading.id).textContent;
+
+  new IntersectionObserver(([entry]) => {
+    const past = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+    bar.classList.toggle("shown", past);
+    if (!past) details.open = false;
+  }).observe(document.querySelector(".contents"));
+
+  let shown;
   function update() {
-    let section = null, subsection = null;
+    let section = null, current = null;
     for (const heading of headings) {
-      if (heading.getBoundingClientRect().top > 96) break;
-      if (heading.tagName === "H2") [section, subsection] = [heading, null];
-      else subsection = heading;
+      if (heading.getBoundingClientRect().top > 80) break;
+      if (heading.tagName === "H2") section = heading;
+      current = heading;
     }
-    const current = subsection ?? section;
     if (current === shown) return;
     shown = current;
-    toc.querySelectorAll("li.open").forEach(li => li.classList.remove("open"));
-    toc.querySelectorAll("[aria-current]").forEach(a => a.removeAttribute("aria-current"));
-    if (section) links.get(section.id).parentElement.classList.add("open");
-    if (current) links.get(current.id).setAttribute("aria-current", "location");
+    bar.querySelectorAll("[aria-current]").forEach(a => a.removeAttribute("aria-current"));
+    if (!current) return void (where.textContent = "Contents");
+    where.textContent = section && section !== current ? `${label(section)} / ${label(current)}` : label(current);
+    links.get(current.id).setAttribute("aria-current", "location");
   }
   let queued = false;
   addEventListener("scroll", () => {
@@ -82,6 +95,11 @@ if (matchMedia("(max-width: 899px)").matches) document.querySelector(".toc detai
     requestAnimationFrame(() => { queued = false; update(); });
   }, { passive: true });
   update();
+
+  // Close the dropdown after choosing a section, on Escape, or on a click elsewhere.
+  bar.addEventListener("click", event => { if (event.target.closest(".panel a")) details.open = false; });
+  addEventListener("keydown", event => { if (event.key === "Escape") details.open = false; });
+  addEventListener("click", event => { if (!bar.contains(event.target)) details.open = false; });
 })();
 </script>
 

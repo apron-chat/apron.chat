@@ -46,11 +46,13 @@ async function source() {
 
 function render(markdown) {
   let html = new Marked(gfmHeadingId()).parse(markdown);
-  const headings = getHeadingList().filter(heading => heading.level === 2 || heading.level === 3);
+  const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
 
-  // A link on each section heading, to share it.
-  html = html.replace(/<h([2-4]) id="([^"]+)">([\s\S]*?)<\/h\1>/g,
-    (_, level, id, text) => `<h${level} id="${id}">${text}<a class="anchor" href="#${id}" aria-label="Link to this section">#</a></h${level}>`);
+  // A link on each section heading to share it, and on top-level sections a
+  // link back to the contents.
+  html = html.replace(/<h([2-4]) id="([^"]+)">([\s\S]*?)<\/h\1>/g, (_, level, id, text) =>
+    `<h${level} id="${id}">${text}<a class="anchor" href="#${id}" aria-label="Link to this section">#</a>` +
+    (level === "2" ? '<a class="up" href="#contents">↑ contents</a>' : "") + `</h${level}>`);
   // Wide tables scroll on their own instead of widening the page.
   html = html.replace(/<table>/g, '<div class="table"><table>').replace(/<\/table>/g, "</table></div>");
   // Dim // comments in code, such as the arrows in examples and the notes in type sketches.
@@ -66,15 +68,20 @@ function render(markdown) {
     else sections.at(-1)?.children.push(heading);
   }
   const toc = sections.map(({ heading, children }) => children.length
-    ? `<li>${item(heading)}\n<ol>\n${children.map(child => `<li>${item(child)}</li>`).join("\n")}\n</ol></li>`
+    ? `<li>${item(heading)}\n<ol>\n${children.map(child => `<li class="l${child.level}">${item(child)}</li>`).join("\n")}\n</ol></li>`
     : `<li>${item(heading)}</li>`);
-  return { html, toc: `<ol class="sections">\n${toc.join("\n")}\n</ol>` };
+
+  // The contents go after the title and version table, before the introduction
+  // (or first, if the spec has no table).
+  const table = html.indexOf("</table></div>");
+  const split = table < 0 ? 0 : table + "</table></div>".length;
+  return { head: html.slice(0, split), html: html.slice(split), toc: `<ol class="toc">\n${toc.join("\n")}\n</ol>` };
 }
 
 const { markdown, history, label, url } = await source();
-const { html, toc } = render(markdown);
+const { head, html, toc } = render(markdown);
 const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1] ?? "";
-const values = { content: html, toc, version, source: label, source_url: url };
+const values = { head, content: html, toc, version, source: label, source_url: url };
 const page = readFileSync(at("templates/protocol.html"), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? "");
 
 writeFileSync(at("public/protocol.html"), page);
