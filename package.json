@@ -1,0 +1,12 @@
+{
+  "name": "apron.chat",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "screenshot": "node screenshot/capture.mjs",
+    "fixture": "bun screenshot/fixture-server.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}
