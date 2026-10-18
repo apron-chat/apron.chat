@@ -8,7 +8,8 @@
     "fixture": "bun screenshot/fixture-server.js"
   },
   "devDependencies": {
-    "playwright": "1.56.1"
+    "playwright": "1.56.1",
+    "wrangler": "4.147.0"
   },
   "dependencies": {
     "marked": "15.0.12",

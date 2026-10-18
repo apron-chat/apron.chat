@@ -10,6 +10,9 @@
   "compatibility_date": "2026-09-20",
   "workers_dev": false,
   "preview_urls": true,
+  // Pull request builds run `wrangler preview`, which requires this block. It
+  // is empty because Previews need no settings of their own.
+  "previews": {},
   "routes": [
     { "pattern": "apron.chat", "custom_domain": true }
   ],
