@@ -1,68 +1,33 @@
 // Scripted Apron Chat v8 server that serves a fixed, realistic scene for
 // screenshots of an Apron client. Requires Bun; no dependencies.
-// Run: bun screenshot/fixture-server.js [--port 8765]
+// Run: bun screenshot/fixture-server.js [--scene team] [--port 8765]
 //
-// Every connection signs in as "ada" and sees the same rooms, members,
-// history and reactions. Messages and reactions it sends are accepted and
-// broadcast, but nothing persists across restarts. Timestamps are relative to
-// startup, so the scene always looks recent.
+// Scenes live in scenes/<name>.js. Every connection signs in as "ada" and sees
+// the scene's rooms, members, history and reactions. Messages and reactions it
+// sends are accepted and broadcast, but nothing persists across restarts.
+// Timestamps are relative to startup, so the scene always looks recent.
+//
+// A scene can also serve live streams at /streams/<name> (they never end, so
+// clients show them as live), files at /files/<name>, and typing. Paths in
+// messages that start with /streams/ or /files/ are sent as URLs on the
+// server's own origin, which clients require for stream and image embeds.
 
-const port = Number(process.argv[process.argv.indexOf("--port") + 1]) || Number(process.env.PORT) || 8765;
+const arg = (name, fallback) => {
+  const at = process.argv.indexOf(`--${name}`);
+  return at > 0 ? process.argv[at + 1] : fallback;
+};
+const port = Number(arg("port", process.env.PORT)) || 8765;
+const sceneName = arg("scene", "team");
+if (!/^[a-z]+$/.test(sceneName)) throw new Error(`Invalid scene: ${sceneName}`);
+const scene = (await import(`./scenes/${sceneName}.js`)).default;
+const { users } = scene;
 
 const GREETING = {
   apron: 8,
-  agent: "apron-screenshot-fixture/1",
+  agent: "apron-screenshot-fixture/2",
   auth: ["guest", "token"],
-  capabilities: ["rooms", "history", "reactions", "status"],
+  capabilities: ["rooms", "history", "reactions", "status", "activity", "embed:upload", "embed:stream"],
 };
-
-// --- The scene ---------------------------------------------------------------
-
-const users = {
-  ada: { user_id: "ada", name: "Ada", status: "online" },
-  priya: { user_id: "priya", name: "Priya", status: "online", roles: ["admin"] },
-  tomas: { user_id: "tomas", name: "Tomás", status: "idle" },
-  mira: { user_id: "mira", name: "Mira", status: "online" },
-  jun: { user_id: "jun", name: "Jun", status: "offline" },
-  deploybot: { user_id: "deploybot", name: "deploy-bot", status: "online", roles: ["bot"] },
-};
-
-const rooms = [
-  { room_id: "general", title: "General", description: "Day-to-day chatter for the team.", members: ["ada", "priya", "tomas", "mira", "jun", "deploybot"] },
-  { room_id: "ops", title: "Ops", description: "Deploys, alerts and on-call.", members: ["ada", "priya", "deploybot"] },
-  { room_id: "random", title: "Random", members: ["ada", "tomas", "mira", "jun"] },
-  { room_id: "release-0-9", parent_room_id: "general", title: "Release 0.9", description: "Follow-ups for the 0.9 release", members: ["ada", "mira", "tomas"] },
-  { room_id: "design", title: "Design", description: "Mockups and reviews.", members: ["mira", "jun"] },
-];
-
-// Minutes before startup, then who said what. `key` names a message for
-// replies and reactions.
-const script = [
-  [190, "random", "jun", "Anyone else's sourdough starter staging a coup this week?"],
-  [176, "ops", "deploybot", "Deployed `api` **v1.4.1** to staging."],
-  [150, "general", "priya", "Morning! Staging is back up after the disk swap.", { key: "staging" }],
-  [146, "general", "tomas", "Thanks. The new reconnect logic held up on the train: dropped wifi twice and history caught right up.", { key: "reconnect" }],
-  [131, "general", "mira", "Nice. Could someone review the room settings PR before lunch?", { key: "review" }],
-  [129, "general", "jun", "On it.", { reply: "review" }],
-  [97, "ops", "deploybot", "Deployed `web` **v0.9.0** to production."],
-  [96, "general", "deploybot", "Deployed `web` **v0.9.0** to production. Changelog: 14 commits, 2 contributors.", { key: "deploy" }],
-  [94, "release-0-9", "mira", "Collecting follow-ups for 0.9 here."],
-  [90, "release-0-9", "tomas", "The thread list should remember its collapsed state. Filing it."],
-  [72, "general", "priya", "Heads up, the bot token moved. New config:\n\n```toml\n[bot]\nserver = \"wss://chat.example.com/\"\ntoken_file = \"/run/secrets/apron\"\n```", { key: "config" }],
-  [70, "general", "deploybot", "Picked up the new token. Reconnected as `deploy-bot`.", { reply: "config" }],
-  [41, "general", "mira", "0.9 is out 🎉 Thread for follow-ups is under **Release 0.9**."],
-  [12, "general", "tomas", "Writing up the changelog now. Anything I missed, drop it in the thread."],
-];
-
-const reactionScript = [
-  [95, "deploy", "mira", ["🎉"]],
-  [94, "deploy", "jun", ["🎉"]],
-  [93, "deploy", "tomas", ["🎉", "🚀"]],
-  [92, "deploy", "priya", ["👍"]],
-  [140, "reconnect", "jun", ["👍"]],
-  [140, "reconnect", "priya", ["👍"]],
-  [68, "config", "tomas", ["🙏"]],
-];
 
 // --- The log -----------------------------------------------------------------
 
@@ -84,7 +49,7 @@ function recorded(user) {
   return { user_id: user.user_id, name: user.name };
 }
 
-for (const room of rooms) {
+for (const room of scene.rooms) {
   const record = { room_id: room.room_id, log_id: logIdAt(minutesAgo(240)), title: room.title };
   if (room.description) record.description = room.description;
   if (room.parent_room_id) record.parent_room_id = room.parent_room_id;
@@ -93,13 +58,16 @@ for (const room of rooms) {
 }
 
 const events = [
-  ...script.map(([ago, room_id, from, text, opts = {}]) => ({ ago, type: "message", room_id, from, text, ...opts })),
-  ...reactionScript.map(([ago, key, from, emojis]) => ({ ago, type: "reactions", key, from, emojis })),
+  ...scene.script.map(([ago, room_id, from, text, opts = {}]) => ({ ago, type: "message", room_id, from, text, ...opts })),
+  ...(scene.reactions ?? []).map(([ago, key, from, emojis]) => ({ ago, type: "reactions", key, from, emojis })),
 ].sort((a, b) => b.ago - a.ago);
 
 for (const event of events) {
   if (event.type === "message") {
-    postMessage(event.room_id, users[event.from], { text: event.text, format: "markdown" }, event.reply && messagesByKey.get(event.reply), minutesAgo(event.ago), event.key);
+    const body = { text: event.text, format: "markdown" };
+    if (event.mentions) body.mentions = event.mentions;
+    if (event.embeds) body.embeds = event.embeds;
+    postMessage(event.room_id, users[event.from], body, event.reply && messagesByKey.get(event.reply), minutesAgo(event.ago), event.key);
   } else {
     react(messagesByKey.get(event.key), users[event.from], event.emojis, minutesAgo(event.ago));
   }
@@ -164,7 +132,7 @@ function roomList(params, you) {
 }
 
 function history(params) {
-  const room_id = params.room_id ?? "general";
+  const room_id = params.room_id ?? scene.rooms[0].room_id;
   check(logs.has(room_id), "Unknown room");
   const limit = Math.min(params.limit ?? 50, 200);
   check(Number.isInteger(limit) && limit > 0, "Invalid limit");
@@ -188,9 +156,13 @@ function history(params) {
 
 const sockets = new Set();
 
+// Sends a frame, with /streams/ and /files/ paths as URLs on this connection's origin.
+function send(ws, frame) {
+  ws.send(JSON.stringify(frame).replace(/"\/(streams|files)\//g, `"${ws.data.origin}/$1/`));
+}
+
 function broadcast(frame) {
-  const text = JSON.stringify(frame);
-  for (const ws of sockets) if (ws.data.you) ws.send(text);
+  for (const ws of sockets) if (ws.data.you) send(ws, frame);
 }
 
 function handle(ws, frame) {
@@ -198,6 +170,10 @@ function handle(ws, frame) {
   const you = ws.data.you;
   if (method === "auth") {
     ws.data.you = users.ada;
+    // Typing shows once the client knows the rooms.
+    for (const { room_id, user } of scene.typing ?? []) {
+      setTimeout(() => send(ws, { method: "activity", params: { room_id, from: recorded(users[user]), typing: 600 } }), 1500);
+    }
     return { you: users.ada };
   }
   check(you, "Sign in first", -32001);
@@ -212,7 +188,7 @@ function handle(ws, frame) {
       return history(params);
     case "message": {
       check(!("message_id" in params), "Editing is unsupported", -32601);
-      const room_id = params.room_id ?? "general";
+      const room_id = params.room_id ?? scene.rooms[0].room_id;
       check(logs.has(room_id), "Unknown room");
       check(params.body && (params.body.text || params.body.embeds?.length), "Missing body");
       const replyTo = params.reply_to && messagesById.get(params.reply_to.message_id);
@@ -236,17 +212,46 @@ function handle(ws, frame) {
   }
 }
 
+// --- HTTP: streams and files -------------------------------------------------
+
+const cors = { "Access-Control-Allow-Origin": "*" };
+
+// Writes the stream's chunks on their schedule, then stays open.
+function stream(chunks) {
+  const encoder = new TextEncoder();
+  let next = 0;
+  const body = new ReadableStream({
+    async pull(controller) {
+      if (next === chunks.length) return new Promise(() => {});
+      const [wait, text] = chunks[next++];
+      await Bun.sleep(wait);
+      controller.enqueue(encoder.encode(text));
+    },
+  });
+  return new Response(body, { headers: { ...cors, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+function serveHttp(url) {
+  const [, kind, name] = url.pathname.match(/^\/(streams|files)\/([\w.-]+)$/) ?? [];
+  if (kind === "streams" && scene.streams?.[name]) return stream(scene.streams[name]);
+  if (kind === "files" && scene.files?.[name]) return new Response(Bun.file(new URL(scene.files[name], new URL(`./scenes/${sceneName}.js`, import.meta.url))), { headers: cors });
+  if (kind) return new Response("Not found\n", { status: 404, headers: cors });
+  return new Response("Apron screenshot fixture: connect with WebSocket\n", { headers: cors });
+}
+
 Bun.serve({
   hostname: "127.0.0.1",
   port,
+  idleTimeout: 0, // Streams stay open with nothing more to send.
   fetch(request, server) {
-    if (server.upgrade(request, { data: { you: null } })) return;
-    return new Response("Apron screenshot fixture: connect with WebSocket\n", { headers: { "Access-Control-Allow-Origin": "*" } });
+    const origin = `http://${request.headers.get("host") ?? `127.0.0.1:${port}`}`;
+    if (server.upgrade(request, { data: { you: null, origin } })) return;
+    return serveHttp(new URL(request.url));
   },
   websocket: {
     open(ws) {
       sockets.add(ws);
-      ws.send(JSON.stringify({ method: "server", params: GREETING }));
+      send(ws, { method: "server", params: GREETING });
     },
     close(ws) {
       sockets.delete(ws);
@@ -256,19 +261,19 @@ Bun.serve({
       try {
         frame = JSON.parse(data);
       } catch {
-        return ws.send(JSON.stringify({ error: { code: -32700, message: "Invalid JSON" } }));
+        return send(ws, { error: { code: -32700, message: "Invalid JSON" } });
       }
-      if (frame.method === "ping") return ws.send(JSON.stringify({ method: "pong" }));
+      if (frame.method === "ping") return send(ws, { method: "pong" });
       try {
         const result = handle(ws, frame);
-        if (frame.id !== undefined) ws.send(JSON.stringify({ id: frame.id, result }));
+        if (frame.id !== undefined) send(ws, { id: frame.id, result });
       } catch (error) {
         if (frame.id === undefined) return;
         const { code = -32603, message = "Internal error" } = error;
-        ws.send(JSON.stringify({ id: frame.id, error: { code, message } }));
+        send(ws, { id: frame.id, error: { code, message } });
       }
     },
   },
 });
 
-console.log(`Apron screenshot fixture on ws://127.0.0.1:${port}/`);
+console.log(`Apron screenshot fixture, scene "${sceneName}", on ws://127.0.0.1:${port}/`);

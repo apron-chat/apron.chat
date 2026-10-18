@@ -60,9 +60,25 @@
 <h2><span>2.</span>Live Demo</h2>
 <p>Chat on the public demo server with restricted functionality, or point your own client at it.</p>
 <div class="demo">
-<figure class="window">
-<button type="button" class="zoom" aria-label="View the screenshot full size"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button>
+<div class="gallery">
+<figure class="shot" id="shot-team">
+<button type="button" class="zoom" aria-label="View full size: team chat"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button>
+<figcaption><b>Team chat.</b> Rooms, a thread, bots, replies, a code block, reactions and presence.</figcaption>
 </figure>
+<figure class="shot" id="shot-agent">
+<button type="button" class="zoom" aria-label="View full size: coding agents"><img src="/images/demo-agent.png" width="1280" height="760" loading="lazy" alt="A coding agent, Patch, in a thread: a finished test run that reproduced a bug, and a live terminal still running the full suite"></button>
+<figcaption><b>Coding agents.</b> A bot streams its terminal into a thread, live, with <code>embed:stream</code>.</figcaption>
+</figure>
+<figure class="shot" id="shot-rich">
+<button type="button" class="zoom" aria-label="View full size: rich messages"><img src="/images/demo-rich.png" width="1280" height="760" loading="lazy" alt="A Design room with an uploaded sticker sheet, a mention, a link preview card, reactions, and someone typing"></button>
+<figcaption><b>Rich messages.</b> Uploads, link previews, mentions, reactions and typing.</figcaption>
+</figure>
+<div class="thumbs" aria-label="Screenshots" hidden>
+<button type="button" aria-controls="shot-team" aria-pressed="true"><img src="/images/demo.png" width="1280" height="760" alt="" loading="lazy"><span>Team chat</span></button>
+<button type="button" aria-controls="shot-agent" aria-pressed="false"><img src="/images/demo-agent.png" width="1280" height="760" alt="" loading="lazy"><span>Coding agents</span></button>
+<button type="button" aria-controls="shot-rich" aria-pressed="false"><img src="/images/demo-rich.png" width="1280" height="760" alt="" loading="lazy"><span>Rich messages</span></button>
+</div>
+</div>
 <aside>
 <a class="button" href="https://web.apron.chat/">Open web.apron.chat</a>
 <div><span class="label">server</span><code>wss://server.apron.chat/</code></div>
@@ -107,14 +123,38 @@
 </div>
 </footer>
 
-<dialog class="lightbox" aria-label="Screenshot of the Apron web client, full size">
-<form method="dialog"><button aria-label="Close"><img src="/images/demo.png" width="1280" height="760" alt="The Apron web client: a General room with a thread, bot and admin badges, a code block, reactions, and a member list with presence"></button></form>
+<dialog class="lightbox" aria-label="Screenshot, full size">
+<form method="dialog"><button aria-label="Close"><img src="/images/demo.png" width="1280" height="760" alt=""></button></form>
 </dialog>
 <script>
-// The screenshot opens full size; a click anywhere or Escape closes it.
+// A screenshot opens full size; a click anywhere or Escape closes it.
 const lightbox = document.querySelector(".lightbox");
-document.querySelector(".zoom").addEventListener("click", () => lightbox.showModal());
+const full = lightbox.querySelector("img");
+for (const zoom of document.querySelectorAll(".zoom")) {
+  zoom.addEventListener("click", () => {
+    const shot = zoom.querySelector("img");
+    full.src = shot.src;
+    full.alt = shot.alt;
+    lightbox.showModal();
+  });
+}
 lightbox.addEventListener("click", event => { if (event.target === lightbox) lightbox.close(); });
+
+// The screenshots show one at a time, picked from the thumbnails below.
+// Without this script, all three are shown, one above the other.
+const gallery = document.querySelector(".gallery");
+const thumbs = gallery.querySelector(".thumbs");
+function show(thumb) {
+  for (const other of thumbs.querySelectorAll("button")) {
+    const on = other === thumb;
+    other.setAttribute("aria-pressed", String(on));
+    document.getElementById(other.getAttribute("aria-controls")).hidden = !on;
+  }
+}
+thumbs.addEventListener("click", event => { const thumb = event.target.closest("button"); if (thumb) show(thumb); });
+thumbs.hidden = false;
+gallery.classList.add("one");
+show(thumbs.querySelector("button"));
 </script>
 
 </body>

@@ -70,11 +70,8 @@ a.button:hover { background: var(--ink); color: #fff; }
 .code .server::before { content: "<- server"; color: var(--server); }
 .code b { color: var(--server); }
 .code .client b { color: var(--accent); }
-.code mark, .legend mark { background: var(--id-bg); color: var(--ink); font-weight: 700; padding: 0 3px; }
-.code strong, .legend strong { color: var(--ink); }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 12px; color: var(--muted); }
-.legend b.client { color: var(--accent); }
-.legend b.server { color: var(--server); }
+.code mark { background: var(--id-bg); color: var(--ink); font-weight: 700; padding: 0 3px; }
+.code strong { color: var(--ink); }
 
 /* Landing page */
 
@@ -95,9 +92,22 @@ section.part > p { max-width: 680px; }
 .links a:not(.button) { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--ink); }
 
 .demo { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
-.window { flex: 999 1 560px; min-width: 0; margin: 0; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); background: #fff; }
-.window .zoom { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
-.window img { display: block; width: 100%; height: auto; }
+.zoom { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+/* Screenshots: one at a time with thumbnails below (the script adds .one);
+   without the script, all of them, one above the other. */
+.gallery { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.gallery.one { gap: 16px; }
+.shot { margin: 0; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); background: #fff; }
+.shot img { display: block; width: 100%; height: auto; }
+.shot figcaption { padding: 10px 14px; border-top: 2px solid var(--ink); font-size: 13px; line-height: 1.5; }
+.thumbs { display: flex; gap: 14px; }
+.thumbs[hidden] { display: none; }
+.thumbs button { flex: 1 1 0; min-width: 0; padding: 0; border: 1px solid var(--ink); background: #fff; font: inherit; text-align: left; cursor: pointer; opacity: 0.7; }
+.thumbs button:hover, .thumbs button:focus-visible { opacity: 1; }
+.thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--accent); outline-offset: 0; box-shadow: 4px 4px 0 var(--ink); }
+.thumbs img { display: block; width: 100%; height: auto; }
+.thumbs span { display: block; padding: 6px 10px; border-top: 1px solid var(--ink); font-size: 12px; }
+.thumbs button[aria-pressed="true"] span { font-weight: 700; color: var(--accent); }
 .lightbox { padding: 0; border: 2px solid var(--ink); background: #fff; max-width: 96vw; max-height: 96vh; }
 .lightbox::backdrop { background: rgba(26, 26, 26, 0.8); }
 .lightbox button { display: block; padding: 0; border: 0; background: none; cursor: zoom-out; }
@@ -112,7 +122,8 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .card .tag { align-self: flex-start; font-size: 12px; padding: 1px 8px; border: 1px solid var(--ink); }
 .card .name { font-weight: 700; color: var(--accent); overflow-wrap: anywhere; }
 .card .desc { font-size: 14px; }
-.card.yours { flex: 2 1 460px; border-style: dashed; background: transparent; }
+/* The "your bot" example takes a row of its own, so its frames fit. */
+.card.yours { flex: 1 1 100%; border-style: dashed; background: transparent; }
 .card.yours .name { color: var(--ink); }
 .card.yours .code { box-shadow: none; border: 0; padding: 12px 14px; font-size: 12px; }
 
