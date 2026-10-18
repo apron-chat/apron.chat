@@ -1,5 +1,6 @@
 // Renders PROTOCOL.md from shazow/apron into public/protocol.html, served at
 // /protocol, and copies the Markdown to public/protocol.md. Also writes
+// public/index.html from templates/index.html with the spec's version, and
 // public/llms-full.txt: public/llms.txt followed by PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
@@ -80,11 +81,14 @@ function render(markdown) {
 
 const { markdown, history, label, url } = await source();
 const { head, html, toc } = render(markdown);
-const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1] ?? "";
+// The version table at the top of the spec. Fail rather than publish a page without it.
+const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
+if (!version) throw new Error(`No "| Protocol Version | N |" row in PROTOCOL.md at ${label}`);
 const values = { head, content: html, toc, version, source: label, source_url: url };
-const page = readFileSync(at("templates/protocol.html"), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? "");
+const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => values[key] ?? "");
 
-writeFileSync(at("public/protocol.html"), page);
+writeFileSync(at("public/protocol.html"), fill("protocol.html"));
+writeFileSync(at("public/index.html"), fill("index.html"));
 writeFileSync(at("public/protocol.md"), markdown);
 // llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
 const index = readFileSync(at("public/llms.txt"), "utf8").trimEnd();

@@ -2,7 +2,10 @@
 
 apron.chat website: a static landing page for the [Apron Chat Protocol](https://github.com/shazow/apron).
 
-- `public/` is the site. `index.html` and `site.css` are hand-edited.
+- `public/` is the site. `site.css` is hand-edited. The landing page is
+  hand-edited in `templates/index.html`, and `npm run build` writes it to
+  `public/index.html` with the protocol version from PROTOCOL.md filled in for
+  `{{version}}`.
 - `/protocol` is [PROTOCOL.md](https://github.com/shazow/apron/blob/main/PROTOCOL.md)
   from shazow/apron, rendered into `public/protocol.html` by `npm run build`
   with `templates/protocol.html` as its page. The raw Markdown is served at
