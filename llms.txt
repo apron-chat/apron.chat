@@ -1,0 +1,32 @@
+# Apron Chat Protocol
+
+> Apron is a small, open chat protocol for trusted groups, bots, and the people who run them. It uses an authoritative server and JSON-RPC-shaped JSON frames. WebSocket is the reference transport; framed bidirectional streams also work.
+
+## Start here
+
+- [Authoritative protocol](https://raw.githubusercontent.com/shazow/apron/main/PROTOCOL.md): The source of truth; read before implementing. The landing page was based on protocol v8. Check upstream for changes.
+- [Project README](https://raw.githubusercontent.com/shazow/apron/main/README.md): Goals, trade-offs, status, and background.
+- [Local protocol snapshot](./PROTOCOL.md): Protocol v8 retrieved on 2026-10-18. Upstream remains authoritative.
+- [Conformance fixtures](https://github.com/shazow/apron/tree/main/tests/fixtures): Fixtures for implementations.
+- [JSON Schema](https://github.com/shazow/apron/blob/main/schema/apron.schema.json): Informative validation and editor completion.
+- [Protocol history](https://github.com/shazow/apron/blob/main/HISTORY.md): Changes by protocol version.
+
+## Implementations
+
+- [Web client](https://github.com/apron-chat/apron-web): Frontend for the live demo at https://web.apron.chat/.
+- [Go reference server](https://github.com/apron-chat/apron-server-go): More complete reference server for self-hosting.
+- [Cloudflare demo server](https://github.com/apron-chat/apron-server-cloudflare): Limited functionality, designed around the Worker free-tier quota.
+- [Pull request bot](https://github.com/apron-chat/apron-pr-bot): Bot used on the demo server.
+- [Landing page source](https://github.com/apron-chat/apron.chat): This website.
+
+## Scope and implementation notes
+
+The mandatory core is enough for working chat. Capabilities are optional and advertised by servers; implement their documented fallbacks. Request IDs are strings. The envelope borrows from JSON-RPC but omits the jsonrpc key. Authentication is a barrier; a sign-in result precedes the notifications it causes. For other requests, notifications caused on the connection precede the result. Follow the protocol's core conformance checklist and its rules for identifiers, retries, and snapshots.
+
+Bots and agents are ordinary senders. A one-shot bot can authenticate, post a message, wait for confirmation, and disconnect. Joining a room is not required to post, subject to server policy.
+
+The server controls identities, membership, permissions, and history. Messages inside the server are not end-to-end encrypted. Use TLS for transport protection. There is no public federation, global social graph, built-in spam defense, or sybil resistance.
+
+WebRTC, the multiplexing envelope, and actions embeds in Appendix C are under consideration, not stable capabilities. Do not present them as implemented core features.
+
+Status at retrieval: beta, core protocol stable. License: MIT.

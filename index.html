@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4eb">
+  <meta name="description" content="Apron is a small, open chat protocol for self-hosted groups, bots, and the people who run them. Readable JSON. Your server. Any compatible client.">
+  <meta property="og:title" content="Apron — Small protocol. Good company.">
+  <meta property="og:description" content="A simple, open chat protocol for your people, your bots, and your server.">
+  <meta property="og:type" content="website">
+  <title>Apron — A small protocol for your kind of chat</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="alternate" type="text/plain" href="./llms.txt" title="Apron resources for LLMs">
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="page">
+    <header class="site-header">
+      <a class="wordmark" href="#" aria-label="Apron home"><img src="./favicon.svg" alt="" width="30" height="30">apron<span class="wordmark-dot">.</span></a>
+      <nav aria-label="Main navigation">
+        <a href="#why-apron">Why Apron</a>
+        <a href="#protocol">The protocol</a>
+        <a href="#start">Get started</a>
+        <a class="nav-github" href="https://github.com/shazow/apron">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> APRON CHAT PROTOCOL <span class="version">v8 / beta</span></p>
+          <h1 id="hero-title">Small protocol.<br>Good company<span class="accent">.</span></h1>
+          <p class="hero-description">A simple, open chat protocol for your people, your bots, and your server.</p>
+          <p class="hero-detail">Self-host a group chat. Build a client. Give your agents a place to talk. Start with readable JSON and a small, useful core.</p>
+          <div class="actions">
+            <a class="button button-primary" href="https://github.com/shazow/apron/blob/main/PROTOCOL.md">Read the protocol <span aria-hidden="true">↗</span></a>
+            <a class="button button-text" href="https://web.apron.chat/">Try the live demo <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="hero-note">Open source. MIT licensed. Core protocol stable.</p>
+        </div>
+
+        <div class="wire-window" aria-label="Interactive example of Apron protocol frames">
+          <div class="window-title"><span><span class="window-icon" aria-hidden="true">▤</span> a conversation, on the wire</span><span class="window-format">JSON / WS</span></div>
+          <div class="wire-tabs" role="tablist" aria-label="Protocol walkthrough">
+            <button id="tab-hello" role="tab" aria-selected="true" aria-controls="wire-panel" tabindex="0" data-step="hello"><span>01</span> hello</button>
+            <button id="tab-auth" role="tab" aria-selected="false" aria-controls="wire-panel" tabindex="-1" data-step="auth"><span>02</span> auth</button>
+            <button id="tab-message" role="tab" aria-selected="false" aria-controls="wire-panel" tabindex="-1" data-step="message"><span>03</span> message</button>
+          </div>
+          <div id="wire-panel" role="tabpanel" aria-labelledby="tab-hello" tabindex="0">
+            <div class="frame-direction" id="frame-direction"><span aria-hidden="true">←</span> SERVER → CLIENT</div>
+            <pre class="wire-code"><code id="wire-code"><span class="line"><span class="punct">{</span></span>
+<span class="line">  <span class="key">"method"</span>: <span class="string">"server"</span>,</span>
+<span class="line">  <span class="key">"params"</span>: {</span>
+<span class="line">    <span class="key">"apron"</span>: <span class="number">8</span>,</span>
+<span class="line">    <span class="key">"capabilities"</span>: [</span>
+<span class="line">      <span class="string">"rooms"</span>, <span class="string">"history"</span></span>
+<span class="line">    ],</span>
+<span class="line">    <span class="key">"auth"</span>: [<span class="string">"guest"</span>, <span class="string">"token"</span>]</span>
+<span class="line">  }</span>
+<span class="line">}</span></code></pre>
+            <p class="frame-caption" id="frame-caption">The server says hello. It tells you what it supports.</p>
+          </div>
+          <div class="window-footer"><span><span class="status-dot" aria-hidden="true"></span> ILLUSTRATIVE SESSION</span><a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#1-transport--framing">See the framing <span aria-hidden="true">↗</span></a></div>
+        </div>
+      </section>
+
+      <div class="spec-strip" aria-label="Protocol at a glance"><span><b>{ }</b> Readable JSON</span><span><b>⇄</b> WebSocket transport</span><span><b>⌂</b> Self-hosted by design</span><span><b>↳</b> Any compatible client</span></div>
+
+      <section class="section why-section" id="why-apron" aria-labelledby="why-title">
+        <div class="section-heading"><p class="eyebrow section-index">01 / THE IDEA</p><h2 id="why-title">Your chat.<br>Your rules.</h2><p>Chat software shouldn’t have to come with<br class="desktop-break"> someone else’s network.</p></div>
+        <div class="principles">
+          <article><div class="principle-symbol" aria-hidden="true">[ your server ]</div><h3>Keep the authority close.</h3><p>Your backend owns identity, membership, history, and permissions. Run it for a team, a household, or a small community that trusts each other.</p></article>
+          <article><div class="principle-symbol" aria-hidden="true">client ⇄ server ⇄ bot</div><h3>Mix the parts you like.</h3><p>Clients and servers speak the same protocol. Pair a compatible frontend with a Go server, a Worker, a bridge, or your own implementation.</p></article>
+          <article><div class="principle-symbol" aria-hidden="true">{ "body": { "text": "hi" } }</div><h3>Make something small.</h3><p>The core aims for a basic server in about 100 lines. A stateless bot needs just a few frames. Add capabilities as your project needs them.</p></article>
+        </div>
+      </section>
+
+      <section class="section protocol-section" id="protocol" aria-labelledby="protocol-title">
+        <div class="section-heading"><p class="eyebrow section-index">02 / THE PROTOCOL</p><h2 id="protocol-title">Start small.<br>Leave room to grow.</h2><p>A working chat starts with the core.<br>Everything else is an optional capability.</p></div>
+        <div class="protocol-grid">
+          <div class="core-box"><div class="box-heading"><span>THE MANDATORY CORE</span><span class="tag">§3</span></div><h3>Connect. Authenticate.<br>Send a message.</h3><p>JSON-RPC-shaped frames over a bidirectional transport. WebSocket is the reference; newline-delimited JSON works on streams, too.</p><div class="method-list"><span>server</span><span>auth</span><span>me</span><span>user</span><span>message</span><span>ping / pong</span></div><a class="inline-link" href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#3-core">Read the core specification <span aria-hidden="true">↗</span></a></div>
+          <div class="capabilities"><div class="capabilities-heading"><span>ADD WHAT YOU NEED</span><span class="muted">§4</span></div>
+            <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#42-rooms"><span><strong>rooms</strong><small>Discovery, membership & threads</small></span><span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#43-history"><span><strong>history</strong><small>Replay and catch up on what you missed</small></span><span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#44-edit"><span><strong>edit · reactions · activity</strong><small>Edits, reactions & typing indicators</small></span><span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#48-embeds-and-avatars"><span><strong>embeds · uploads · streams</strong><small>Images, files & streaming content</small></span><span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/shazow/apron/blob/main/PROTOCOL.md#4-capabilities"><span><strong>And a little more.</strong><small>Commands, status, push, passkeys & extensions</small></span><span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <p class="protocol-footnote"><span aria-hidden="true">↳</span> Servers advertise their capabilities. Partial implementations are useful from day one.</p>
+      </section>
+
+      <aside class="tradeoffs" aria-labelledby="tradeoffs-title"><div><p class="eyebrow">SMALL BY CHOICE</p><h2 id="tradeoffs-title">A few deliberate trade-offs.</h2></div><div><p>Apron is for trusted groups. The server is authoritative; messages inside it are <strong>not end-to-end encrypted</strong>. Use TLS to protect the connection.</p><p>There’s no public federation, global social network, built-in spam defense, or sybil resistance. If those are your requirements, Apron may not be the right fit.</p></div></aside>
+
+      <section class="section ecosystem-section" id="implementations" aria-labelledby="ecosystem-title">
+        <div class="section-heading"><p class="eyebrow section-index">03 / WORKING CODE</p><h2 id="ecosystem-title">You don’t have to<br>start from scratch.</h2><p>Read it. Run it. Make it your own.<br>Explore the Apron implementations.</p></div>
+        <div class="repo-list">
+          <a href="https://github.com/apron-chat/apron-web"><span class="repo-type">CLIENT</span><span class="repo-content"><strong>apron-web</strong><small>The web frontend behind the live demo.</small></span><span class="repo-tech">SvelteKit</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/apron-chat/apron-server-go"><span class="repo-type">SERVER</span><span class="repo-content"><strong>apron-server-go</strong><small>The more complete reference server for self-hosting.</small></span><span class="repo-tech">Go</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/apron-chat/apron-server-cloudflare"><span class="repo-type">SERVER</span><span class="repo-content"><strong>apron-server-cloudflare</strong><small>A demo server with limited functionality, built for the free tier.</small></span><span class="repo-tech">Workers</span><span aria-hidden="true">↗</span></a>
+          <a href="https://github.com/apron-chat/apron-pr-bot"><span class="repo-type">BOT</span><span class="repo-content"><strong>apron-pr-bot</strong><small>The GitHub pull request bot used on the demo server.</small></span><span class="repo-tech">GitHub</span><span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="start-section" id="start" aria-labelledby="start-title">
+        <div class="start-copy"><p class="eyebrow section-index">04 / YOUR NEXT COMMIT</p><h2 id="start-title">Make yourself<br>at home<span class="accent">.</span></h2><p>Bring a project. Bring a bot. Bring your favorite language. The specification is the starting point.</p><a class="button button-primary" href="https://github.com/shazow/apron/blob/main/PROTOCOL.md">Build with Apron <span aria-hidden="true">↗</span></a><a class="start-demo" href="https://web.apron.chat/">Or say hello in the live demo →</a></div>
+        <div class="agent-box"><div class="box-heading"><span>HUMANS & AGENTS WELCOME</span><span aria-hidden="true">{ }</span></div><h3>Good context goes a long way.</h3><p>Give your LLM the protocol, then ask it to build a server, client, or bot. Start with the core and test against the conformance fixtures.</p><div class="agent-links"><a href="./PROTOCOL.md">PROTOCOL.md <span>plain text ↗</span></a><a href="./llms.txt">llms.txt <span>resource index ↗</span></a><a href="https://github.com/shazow/apron/tree/main/tests/fixtures">Conformance fixtures <span>GitHub ↗</span></a></div><button class="copy-button" id="copy-prompt" type="button">Copy an implementation prompt <span aria-hidden="true">⧉</span></button><p class="copy-status" id="copy-status" role="status" aria-live="polite"></p><details class="prompt-fallback"><summary>Read the prompt</summary><p id="implementation-prompt">Read https://raw.githubusercontent.com/shazow/apron/main/PROTOCOL.md as the authoritative Apron specification and https://raw.githubusercontent.com/shazow/apron/main/README.md for context. Help me build an Apron-compatible project. First ask whether I need a server, client, or bot and which language I prefer. Implement the mandatory core before optional capabilities, follow its conformance checklist, and validate against https://github.com/shazow/apron/tree/main/tests/fixtures. Keep authentication and permission policy explicit. Do not implement the designs under “Under consideration” as stable capabilities.</p></details></div>
+      </section>
+    </main>
+
+    <footer class="site-footer"><div><a class="wordmark" href="#"><img src="./favicon.svg" alt="" width="23" height="23">apron<span class="wordmark-dot">.</span></a><span>A small protocol for your kind of chat.</span></div><nav aria-label="Footer navigation"><a href="https://github.com/shazow/apron">Protocol source ↗</a><a href="https://github.com/apron-chat/apron.chat">Website source ↗</a><a href="https://github.com/shazow/apron/blob/main/LICENSE">MIT</a></nav><p>Designed for small, independent communities. <span>Happy hacking.</span></p></footer>
+  </div>
+</body>
+</html>
