@@ -2547,4 +2547,3 @@ class Embed {   // "actions" kind, besides the fields of §4.8
 - Clients ignore groups they do not know ([§1](#1-transport--framing)).
 - Clients without `actions` support render the fallback card ([§3.5](#35-messages)).
   Its `og` can spell out the commands to type.
-
