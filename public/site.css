@@ -95,12 +95,22 @@ section.part > p { max-width: 680px; }
 .links a:not(.button) { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--ink); }
 
 .demo { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
-.window { flex: 999 1 560px; min-width: 0; margin: 0; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); background: #fff; }
 .zoom { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
-.window img, .shot img { display: block; width: 100%; height: auto; }
-.shots { display: flex; flex-wrap: wrap; gap: 28px; padding-top: 8px; }
-.shot { flex: 1 1 320px; min-width: 0; margin: 0; border: 2px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); background: #fff; }
+/* Screenshots: one at a time with thumbnails below (the script adds .one);
+   without the script, all of them, one above the other. */
+.gallery { flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.gallery.one { gap: 16px; }
+.shot { margin: 0; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); background: #fff; }
+.shot img { display: block; width: 100%; height: auto; }
 .shot figcaption { padding: 10px 14px; border-top: 2px solid var(--ink); font-size: 13px; line-height: 1.5; }
+.thumbs { display: flex; gap: 14px; }
+.thumbs[hidden] { display: none; }
+.thumbs button { flex: 1 1 0; min-width: 0; padding: 0; border: 1px solid var(--ink); background: #fff; font: inherit; text-align: left; cursor: pointer; opacity: 0.7; }
+.thumbs button:hover, .thumbs button:focus-visible { opacity: 1; }
+.thumbs button[aria-pressed="true"] { opacity: 1; outline: 2px solid var(--accent); outline-offset: 0; box-shadow: 4px 4px 0 var(--ink); }
+.thumbs img { display: block; width: 100%; height: auto; }
+.thumbs span { display: block; padding: 6px 10px; border-top: 1px solid var(--ink); font-size: 12px; }
+.thumbs button[aria-pressed="true"] span { font-weight: 700; color: var(--accent); }
 .lightbox { padding: 0; border: 2px solid var(--ink); background: #fff; max-width: 96vw; max-height: 96vh; }
 .lightbox::backdrop { background: rgba(26, 26, 26, 0.8); }
 .lightbox button { display: block; padding: 0; border: 0; background: none; cursor: zoom-out; }
