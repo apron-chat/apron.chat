@@ -32,7 +32,8 @@ h1, h2, h3, p { margin: 0; }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
 
 header.top { border-bottom: 2px solid var(--ink); }
-header.top nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 28px; padding: 14px 20px; font-size: 14px; }
+/* The gap narrows with the screen, so the links stay on one line on phones. */
+header.top nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px clamp(12px, 3.5vw, 28px); padding: 14px 16px; font-size: 14px; }
 header.top nav a { color: var(--ink); }
 header.top nav a.strong { color: var(--accent); font-weight: 700; }
 
