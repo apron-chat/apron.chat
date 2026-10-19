@@ -3,7 +3,7 @@
 The screenshots on the landing page are a real Apron web client talking to a
 scripted server, so they show lived-in chats without anyone's real messages.
 
-- `fixture-server.js` is an Apron Chat v8 server for Bun with no
+- `fixture-server.js` is an Apron Chat v9 server for Bun with no
   dependencies. It serves one scene from `scenes/`. Timestamps are relative to
   when it starts. It also serves a scene's live streams at `/streams/<name>`
   (they never end, so clients show them as live), its files at

@@ -1,4 +1,4 @@
-// Scripted Apron Chat v8 server that serves a fixed, realistic scene for
+// Scripted Apron Chat v9 server that serves a fixed, realistic scene for
 // screenshots of an Apron client. Requires Bun; no dependencies.
 // Run: bun screenshot/fixture-server.js [--scene team] [--port 8765]
 //
@@ -23,7 +23,7 @@ const scene = (await import(`./scenes/${sceneName}.js`)).default;
 const { users } = scene;
 
 const GREETING = {
-  apron: 8,
+  apron: 9,
   agent: "apron-screenshot-fixture/2",
   auth: ["guest", "token"],
   capabilities: ["rooms", "history", "reactions", "status", "activity", "embed:upload", "embed:stream"],
