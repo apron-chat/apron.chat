@@ -12,6 +12,7 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { Marked } from "marked";
 import { gfmHeadingId, getHeadingList } from "marked-gfm-heading-id";
 import hljs from "highlight.js/lib/core";
@@ -42,7 +43,7 @@ async function get(url) {
 async function source() {
   if (process.env.APRON_PROTOCOL) {
     const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
-    const history = readFileSync(new URL("HISTORY.md", `file://${process.env.APRON_PROTOCOL}`), "utf8");
+    const history = readFileSync(join(dirname(process.env.APRON_PROTOCOL), "HISTORY.md"), "utf8");
     return { markdown, history, label: "local", url: `https://github.com/${repo}`, historyUrl: `https://github.com/${repo}/blob/main/HISTORY.md` };
   }
   const ref = process.env.APRON_REF || "main";
