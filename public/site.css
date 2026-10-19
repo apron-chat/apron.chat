@@ -273,6 +273,12 @@ body.spec { overflow-x: clip; }
 .prose .tier h2 { border-bottom-color: var(--tier); }
 .prose .tier[data-tier="optional"] :is(h2, h3) { color: var(--server); }
 
+/* Under the title: the newest protocol version, linking to HISTORY.md. */
+.prose a.history { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 28px; padding: 10px 16px; background: #fff; border: 1px solid var(--ink); color: var(--ink); text-decoration: none; }
+.prose a.history:hover { box-shadow: 4px 4px 0 var(--server); }
+.history .label { font-size: 13px; color: var(--muted); }
+.history .go { margin-left: auto; font-size: 13px; color: var(--server); text-decoration: underline; }
+
 /* Optional capabilities: a line on what each adds, and folds (the script
    closes them; without it they stay open). */
 .prose .capability { display: flex; flex-wrap: wrap; gap: 2px 20px; margin: -4px 0 16px; font-size: 13px; line-height: 1.5; color: var(--muted); }
