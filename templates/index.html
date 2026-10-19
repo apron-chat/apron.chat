@@ -38,7 +38,7 @@
 
 <section class="part" id="protocol">
 <h2><span>1.</span>The Protocol</h2>
-<p>JSON over any transport, like WebSocket. The server is the authority. A small core, and optional incremental capabilities with graceful fallbacks.</p>
+<p>JSON over any transport, like WebSocket. Small core specification and optional incremental capabilities with graceful fallbacks.</p>
 <pre class="code">
 <span class="server">{"method": <b>"server"</b>, "params": {"apron": {{version}}, "auth": [<strong>"guest"</strong>]}}</span>
 <span class="client">{"method": <b>"auth"</b>, "id": <mark>"c1"</mark>, "params": {"scheme": <strong>"guest"</strong>, "name": <strong>"Ada"</strong>}}</span>
