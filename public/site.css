@@ -84,10 +84,9 @@ a.button:hover { background: var(--ink); color: #fff; }
 .hero img { width: 160px; height: 160px; flex: 0 0 auto; }
 .hero div { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
 .hero h1 { font-size: clamp(30px, 4.6vw, 46px); line-height: 1.1; }
-.hero .lead { font-size: 17px; max-width: 560px; }
-/* Under the lead: the spec, and the running demo. */
-.hero .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-top: 6px; }
-.hero .actions a:not(.button) { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink); font-weight: 700; }
+.hero .lead { font-size: 17px; max-width: 640px; }
+/* Where it fits, the lead breaks between its phrases, one to a line. */
+@media (min-width: 900px) { .hero .lead span { display: inline-block; } }
 
 section.part { padding-top: 88px; display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 16px; }
 section.part:first-of-type { padding-top: 72px; }
