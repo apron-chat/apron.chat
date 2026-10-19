@@ -8,7 +8,8 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   `{{version}}`.
 - `/protocol` is [PROTOCOL.md](https://github.com/shazow/apron/blob/main/PROTOCOL.md)
   from shazow/apron, rendered into `public/protocol.html` by `npm run build`
-  with `templates/protocol.html` as its page. The raw Markdown is served at
+  with `templates/protocol.html` as its page, and its code blocks colored by
+  [highlight.js](https://highlightjs.org/). The raw Markdown is served at
   `/protocol.md`. These are generated, not committed.
 - `public/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
   hand-edited. `npm run build` also writes `public/llms-full.txt`: the index,
@@ -33,9 +34,17 @@ npx wrangler dev        # runs npm run build, then serves http://localhost:8787
 to render another branch, tag or commit, or `APRON_PROTOCOL=../apron/PROTOCOL.md`
 to render a local copy.
 
+The spec page sorts the top-level sections into tiers by their headings:
+required from the first section, optional from "N. Capabilities",
+informative from "N. Security considerations", and draft from "Appendix X —
+Under consideration". Each tier gets its own paper color, and the
+capabilities fold to a line each, taken from the capability table
+(`| capability | adds | fallback | spec |`) in the Capabilities section.
+
 The build fails, before writing anything, if it can't fetch the spec or
 resolve the ref, if the spec has no sections or `| Protocol Version | N |`
-row, or if a template has a `{{placeholder}}` it has no value for. Workers
+row, if a tier's heading or the capability table is missing, or if a
+template has a `{{placeholder}}` it has no value for. Workers
 Builds then keeps the last good deploy.
 
 ## Protocol frames

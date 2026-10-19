@@ -14,9 +14,23 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { Marked } from "marked";
 import { gfmHeadingId, getHeadingList } from "marked-gfm-heading-id";
+import hljs from "highlight.js/lib/core";
+import json from "highlight.js/lib/languages/json";
+import typescript from "highlight.js/lib/languages/typescript";
 
 const repo = "shazow/apron";
 const at = path => new URL(`../${path}`, import.meta.url);
+
+// The languages the spec's code blocks use: json and jsonc, and ts.
+hljs.registerLanguage("json", json);
+hljs.registerLanguage("typescript", typescript);
+// Code blocks colored by highlight.js, at build time. A block in another
+// language is left plain.
+const escape = text => text.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const highlight = { renderer: { code({ text, lang }) {
+  const code = lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }).value : escape(text);
+  return `<pre><code${lang ? ` class="language-${escape(lang)}"` : ""}>${code}</code></pre>\n`;
+} } };
 
 async function get(url) {
   const response = await fetch(url, { headers: { "User-Agent": "apron.chat-build" } });
@@ -45,8 +59,53 @@ async function source() {
   return { markdown, history, label, url: `https://github.com/${repo}/blob/${commit}/PROTOCOL.md` };
 }
 
+// How much of the spec an implementation reads. Each tier runs from the section
+// that starts it to the next tier's, and the first starts at the first section.
+const tiers = [
+  { key: "required", name: "Required" },
+  { key: "optional", name: "Optional", starts: /^\d+\. Capabilities$/ },
+  { key: "informative", name: "Informative", starts: /^\d+\. Security considerations$/ },
+  { key: "draft", name: "Draft", starts: /^Appendix [A-Z] — Under consideration$/ },
+];
+
+const words = html => html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+const count = n => n.toLocaleString("en-US");
+
+// Sections by number, such as "§1–3" or "§5, A–B".
+function numbers(sections) {
+  const span = list => list.length > 1 ? `${list[0]}–${list.at(-1)}` : list[0];
+  const numbered = sections.map(s => s.heading.raw.match(/^(\d+)\./)?.[1]).filter(Boolean);
+  const lettered = sections.map(s => s.heading.raw.match(/^Appendix ([A-Z])/)?.[1]).filter(Boolean);
+  return [numbered.length && `§${span(numbered)}`, lettered.length && span(lettered)].filter(Boolean).join(", ");
+}
+
+// A line under each capability's heading: what it adds and what clients do
+// without it, from the table in the Capabilities section
+// (| capability | adds | fallback | spec |). For features with no capability,
+// how a server turns them on, from the list after it.
+function capabilities(html) {
+  const notes = new Map();
+  for (const [, table] of html.matchAll(/<table>([\s\S]*?)<\/table>/g)) {
+    const head = [...table.matchAll(/<th>([\s\S]*?)<\/th>/g)].map(m => m[1]);
+    if (head.join() !== "capability,adds,fallback,spec") continue;
+    for (const [, row] of table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
+      const [, adds, fallback, spec] = [...row.matchAll(/<td>([\s\S]*?)<\/td>/g)].map(m => m[1]);
+      const id = spec?.match(/href="#([^"]+)"/)?.[1];
+      if (id) notes.set(id, `<span class="adds"><i>Adds</i> ${adds}</span><span><i>Without it</i> ${fallback}</span>`);
+    }
+  }
+  if (!notes.size) throw new Error("No capability table (| capability | adds | fallback | spec |) in the Capabilities section");
+  // "<code>server.push</code> enables push (§4.9)." without the reference.
+  const list = html.match(/no capability:<\/p>\s*<ul>([\s\S]*?)<\/ul>/)?.[1] ?? "";
+  for (const [, item] of list.matchAll(/<li>([\s\S]*?)<\/li>/g)) {
+    const text = item.replace(/\s*\([^()]*\)\.?\s*$/, ".");
+    for (const [, id] of item.matchAll(/href="#([^"]+)"/g)) if (!notes.has(id)) notes.set(id, `<span class="how">${text}</span>`);
+  }
+  return notes;
+}
+
 function render(markdown) {
-  let html = new Marked(gfmHeadingId()).parse(markdown);
+  let html = new Marked(gfmHeadingId(), highlight).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
   if (!headings.some(heading => heading.level === 2)) throw new Error("No sections (## headings) in PROTOCOL.md");
 
@@ -57,36 +116,96 @@ function render(markdown) {
     (level === "2" ? '<a class="up" href="#contents">↑ contents</a>' : "") + `</h${level}>`);
   // Wide tables scroll on their own instead of widening the page.
   html = html.replace(/<table>/g, '<div class="table"><table>').replace(/<\/table>/g, "</table></div>");
-  // Dim // comments in code, such as the arrows in examples and the notes in type sketches.
-  html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_, attrs, code) =>
-    `<pre><code${attrs}>${code.replace(/(^|\s)(\/\/(?: .*)?)$/gm, '$1<span class="c">$2</span>')}</code></pre>`);
+  // Bold the requirement keywords: MUST and MUST NOT in color, SHOULD and
+  // SHOULD NOT plain. MAY stays as it is. Code and tags are left alone.
+  html = html.replace(/(<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>|<[^>]+>)|\b(MUST|SHOULD)( NOT)?\b/g, (_, skip, word, not = "") =>
+    skip ?? `<strong class="${word.toLowerCase()}">${word}${not}</strong>`);
 
-  // The contents: each top-level section, with its subsections nested under it.
-  // "Appendix A — Conventions (informative)" is listed as "A. Conventions".
-  const item = heading => `<a href="#${heading.id}">${heading.text.replace(/^Appendix ([A-Z]) — (.*?)(?: \(informative\))?$/, "$1. $2")}</a>`;
+  // Each top-level section, with its subsections, and the tier it belongs to.
   const sections = [];
   for (const heading of headings) {
     if (heading.level === 2) sections.push({ heading, children: [] });
     else sections.at(-1)?.children.push(heading);
   }
-  const toc = sections.map(({ heading, children }) => children.length
-    ? `<li>${item(heading)}\n<ol>\n${children.map(child => `<li class="l${child.level}">${item(child)}</li>`).join("\n")}\n</ol></li>`
-    : `<li>${item(heading)}</li>`);
+  let start = 0;
+  for (const [i, tier] of tiers.entries()) {
+    const at = i && sections.findIndex(s => tier.starts.test(s.heading.raw));
+    if (i && at <= start) throw new Error(`No "${tier.name}" tier: no section matching ${tier.starts}, or it comes before the "${tiers[i - 1].name}" tier`);
+    start = at;
+    for (const s of sections.slice(at)) s.tier = tier;
+  }
 
   // The contents go after the title and version table, before the introduction.
   const table = html.indexOf("</table></div>");
   if (table < 0) throw new Error("No version table at the top of PROTOCOL.md");
   const split = table + "</table></div>".length;
-  return { head: html.slice(0, split), html: html.slice(split), toc: `<ol class="toc">\n${toc.join("\n")}\n</ol>` };
+  const head = html.slice(0, split);
+  // The rest is the introduction, then each top-level section, without the rule before it.
+  const [intro, ...parts] = html.slice(split).split(/(?:<hr>\s*)?(?=<h2 id=")/);
+  if (parts.length !== sections.length) throw new Error(`Found ${parts.length} sections in PROTOCOL.md but ${sections.length} ## headings`);
+  sections.forEach((s, i) => { s.html = parts[i]; s.words = words(parts[i]); });
+
+  const runs = [];
+  for (const s of sections) {
+    if (runs.at(-1)?.tier === s.tier) runs.at(-1).sections.push(s);
+    else runs.push({ tier: s.tier, sections: [s] });
+  }
+  const total = sections.reduce((n, s) => n + s.words, 0);
+  for (const run of runs) {
+    run.words = run.sections.reduce((n, s) => n + s.words, 0);
+    run.share = `${count(run.words)} words · ${Math.round(100 * run.words / total)}% of the spec`;
+  }
+  const run = key => runs.find(r => r.tier.key === key);
+
+  // Optional sections: each subsection folds to its heading, a line on what the
+  // capability adds, and its length. Without the page's script, they stay open.
+  const notes = capabilities(run("optional").sections.map(s => s.html).join(""));
+  const note = id => notes.has(id) ? `<p class="capability">${notes.get(id)}</p>` : "";
+  for (const s of run("optional").sections) {
+    const [top, ...subsections] = s.html.split(/(?=<h3 id=")/);
+    s.html = top + subsections.map(sub => {
+      const end = sub.indexOf("</h3>") + "</h3>".length;
+      const id = sub.match(/^<h3 id="([^"]+)"/)[1];
+      const rest = sub.slice(end).replace(/<h4 id="([^"]+)">[\s\S]*?<\/h4>/g, (h4, id) => h4 + note(id));
+      return `<details class="fold" open>\n<summary>${sub.slice(0, end)}${note(id)}<span class="bar"><span class="toggle" aria-hidden="true"></span><span class="length">${count(words(sub))} words</span></span></summary>\n${rest}</details>\n`;
+    }).join("");
+  }
+
+  // Each tier under a tab that names it, with its length.
+  const body = intro + runs.map(r =>
+    `<div class="tier" data-tier="${r.tier.key}">\n<p class="tier-tab"><b>${r.tier.name}</b><span class="share">${r.share}</span></p>\n` +
+    r.sections.map(s => s.html).join("") + "</div>\n").join("");
+
+  // Above the contents, the tiers drawn to scale by length.
+  const map = `<div class="map">
+<div class="map-bar">${runs.map(r => `<a href="#${r.sections[0].heading.id}" data-tier="${r.tier.key}" style="flex-grow: ${r.words}" aria-label="${r.tier.name}: ${r.share}"></a>`).join("")}</div>
+<ul>
+${runs.map(r => `<li data-tier="${r.tier.key}"><a href="#${r.sections[0].heading.id}"><b>${r.tier.name}</b> <span>${numbers(r.sections)}</span></a></li>`).join("\n")}
+</ul>
+</div>`;
+
+  // The contents: each top-level section, with its subsections nested under it,
+  // and each tier's name before its first section. Optional sections list
+  // their capabilities, not what's inside them.
+  // "Appendix A — Conventions (informative)" is listed as "A. Conventions".
+  const item = heading => `<a href="#${heading.id}">${heading.text.replace(/^Appendix ([A-Z]) — (.*?)(?: \(informative\))?$/, "$1. $2")}</a>`;
+  const toc = sections.map(({ heading, children, tier }, i) =>
+    (sections[i - 1]?.tier === tier ? "" : `<li class="label" data-tier="${tier.key}">${tier.name}</li>\n`) +
+    (children.length
+      ? `<li data-tier="${tier.key}">${item(heading)}\n<ol>\n${children.map(child =>
+        `<li class="l${child.level}${tier.key === "optional" && child.level === 4 ? " folded" : ""}">${item(child)}</li>`).join("\n")}\n</ol></li>`
+      : `<li data-tier="${tier.key}">${item(heading)}</li>`));
+
+  return { head, html: body, map, toc: `<ol class="toc">\n${toc.join("\n")}\n</ol>` };
 }
 
 const { markdown, history, label, url } = await source();
-const { head, html, toc } = render(markdown);
+const { head, html, map, toc } = render(markdown);
 // The version table at the top of the spec. Fail rather than publish a page without it.
 const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!version) throw new Error(`No "| Protocol Version | N |" row in PROTOCOL.md at ${label}`);
 if (!history.trim()) throw new Error(`HISTORY.md at ${label} is empty`);
-const values = { head, content: html, toc, version, source: label, source_url: url };
+const values = { head, content: html, map, toc, version, source: label, source_url: url };
 // A placeholder with no value is a typo in the template, or a value the build failed to make.
 const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => {
   if (!values[key]) throw new Error(`templates/${template}: no value for {{${key}}}`);
