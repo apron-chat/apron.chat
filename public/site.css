@@ -224,10 +224,16 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .prose pre .hljs-built_in { color: var(--server); }
 .prose pre .hljs-title { font-weight: 700; }
 .prose strong.must { color: var(--accent); }
-.prose .table { overflow-x: auto; margin: 0 0 14px; border: 1px solid var(--ink); background: #fff; }
-.prose table { border-collapse: collapse; font-size: 13px; line-height: 1.5; min-width: 100%; margin: 0; }
+/* A table is as wide as its content, up to the page, so no column is stretched
+   to fill the line. */
+.prose .table { width: fit-content; max-width: 100%; overflow-x: auto; margin: 0 0 14px; border: 1px solid var(--ink); background: #fff; }
+.prose table { border-collapse: collapse; font-size: 13px; line-height: 1.5; margin: 0; }
 .prose th, .prose td { text-align: left; vertical-align: top; padding: 6px 12px; border-bottom: 1px solid var(--rule); }
-.prose th { background: var(--chip); border-bottom-color: var(--ink); }
+.prose th { background: var(--chip); border-bottom-color: var(--ink); white-space: nowrap; }
+/* Code in a table: no chip in the header, which is already chip-colored, and
+   a narrower one in cells, so a comma after it doesn't look spaced off. */
+.prose th code { background: none; padding: 0; }
+.prose td code { padding: 1px 3px; }
 .prose tr:last-child td { border-bottom: 0; }
 
 /* The spec's tiers: required, optional, informative and draft. Each sets
