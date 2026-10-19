@@ -1,6 +1,6 @@
 # Apron Chat Protocol
 
-> Apron is a simple chat protocol for small groups whose members mostly trust each other: a team, a household, or a set of bots and the people who run them. JSON frames over a WebSocket. The server is the authority on identity, membership and history. There is no federation. A basic server is about a hundred lines of code, and a stateless bot is a few.
+> Apron is a simple chat protocol for small groups whose members mostly trust each other: a team, a household, or a set of bots and the people who run them. JSON frames over a WebSocket. The server is the authority on identity, membership and history. A basic server is about a hundred lines of code, and a stateless bot is a few.
 
 The protocol is incremental. The mandatory core is enough for a working chat: a `server` greeting, `auth`, identities, rooms as logs, and `message`. Everything else is an optional capability that a server advertises in its `server` frame, each with a fallback for clients and servers that lack it. Nothing is negotiated. Frames use the shape of JSON-RPC 2.0 requests, responses and notifications, without the `jsonrpc` key.
 
@@ -17,10 +17,10 @@ The full specification is also at https://apron.chat/llms-full.txt, in one file.
 
 ## Servers
 
-- [python-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/python-minimal/apron_server.py): A single-file core server in Python with capability `history`, a starting point to read or adapt
-- [js-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/js-minimal/apron-server.js): The same in JavaScript for Bun, with no dependencies
 - [apron-server-go](https://github.com/apron-chat/apron-server-go): The Go reference server for self-hosting, implementing every capability
 - [apron-server-cloudflare](https://github.com/apron-chat/apron-server-cloudflare): The public demo server at wss://server.apron.chat/, a Cloudflare Worker with a SQLite Durable Object
+- [python-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/python-minimal/apron_server.py): A single-file core server in Python with capability `history`, a starting point to read or adapt
+- [js-minimal](https://raw.githubusercontent.com/shazow/apron/main/servers/js-minimal/apron-server.js): The same in JavaScript for Bun, with no dependencies
 
 ## Clients
 
