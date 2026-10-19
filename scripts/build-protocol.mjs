@@ -164,17 +164,8 @@ function render(markdown) {
     }).join("");
   }
 
-  // After the required tier, a note that it's all an implementation needs.
-  const required = run("required"), optional = run("optional"), informative = run("informative"), draft = run("draft");
-  const checklist = required.sections.flatMap(s => s.children).find(h => /conformance checklist$/i.test(h.raw));
-  const finish = `<aside class="finish" aria-labelledby="end-of-required">
-<p class="kicker">End of the required spec</p>
-<p class="title" id="end-of-required">You have a complete chat.</p>
-<p>${numbers(required.sections)} are all a server must implement, and all a client can count on: ${count(required.words)} words, ${Math.round(100 * required.words / total)}% of this page.${checklist ? ` Check your work against the <a href="#${checklist.id}">${checklist.raw.replace(/^[\d.]+ /, "").toLowerCase()}</a>.` : ""}</p>
-<p>Everything below is optional. Each capability in ${numbers(optional.sections)} stands alone and says what clients do without it, so read only the ones you build. ${numbers(informative.sections)} explain the rules above and add none. ${numbers(draft.sections)} is not part of the protocol yet.</p>
-<p class="links"><a class="button" href="#${optional.sections[0].heading.id}">Choose capabilities ↓</a><a href="#${informative.sections[0].heading.id}">Skip to ${informative.sections[0].heading.raw.replace(/^\d+\. /, "").toLowerCase()}</a></p>
-</aside>`;
-  const body = intro + runs.map(r => (r === optional ? finish : "") +
+  // Each tier under a tab that names it and says how long it is.
+  const body = intro + runs.map(r =>
     `<div class="tier" data-tier="${r.tier.key}">\n<p class="tier-tab"><b>${r.tier.name}</b><span>${r.tier.about(numbers(r.sections))}</span><span class="share">${r.share}</span></p>\n` +
     r.sections.map(s => s.html).join("") + "</div>\n").join("");
 

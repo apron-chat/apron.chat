@@ -261,15 +261,6 @@ body.spec { overflow-x: clip; }
 .prose .tier h2 { border-bottom-color: var(--tier); }
 .prose .tier[data-tier="optional"] :is(h2, h3) { color: var(--server); }
 
-/* After the required tier: the end of what an implementation needs. */
-.prose .finish { position: relative; margin: 72px 0 8px; padding: 22px 24px 24px; background: #fff; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--accent); }
-.finish::before { content: ""; position: absolute; left: -2px; right: -2px; top: -12px; height: 10px; background: repeating-conic-gradient(var(--ink) 0 25%, #fff 0 50%) 0 0 / 10px 10px; border: 2px solid var(--ink); border-bottom: 0; }
-.prose .finish p { margin: 0 0 12px; }
-.finish .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
-.prose .finish .kicker { margin-bottom: 4px; }
-.finish .title { font-size: 21px; font-weight: 700; line-height: 1.3; text-wrap: balance; }
-.prose .finish .links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin: 16px 0 0; }
-
 /* Optional capabilities: a line on what each adds, and folds (the script
    closes them; without it they stay open). */
 .prose .capability { display: flex; flex-wrap: wrap; gap: 2px 20px; margin: -4px 0 16px; font-size: 13px; line-height: 1.5; color: var(--muted); }
