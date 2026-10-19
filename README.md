@@ -43,7 +43,8 @@ capabilities fold to a line each, taken from the capability table
 
 The build fails, before writing anything, if it can't fetch the spec or
 resolve the ref, if the spec has no title, no sections, or no `version: N` in its
-front matter, if a tier's heading or the capability table is missing, or if a
+front matter, if HISTORY.md has no `## vN (date)` entry, if a tier's heading
+or the capability table is missing, or if a
 template has a `{{placeholder}}` it has no value for. Workers
 Builds then keeps the last good deploy.
 

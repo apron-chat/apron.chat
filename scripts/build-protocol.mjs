@@ -43,7 +43,7 @@ async function source() {
   if (process.env.APRON_PROTOCOL) {
     const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
     const history = readFileSync(new URL("HISTORY.md", `file://${process.env.APRON_PROTOCOL}`), "utf8");
-    return { markdown, history, label: "local", url: `https://github.com/${repo}` };
+    return { markdown, history, label: "local", url: `https://github.com/${repo}`, historyUrl: `https://github.com/${repo}/blob/main/HISTORY.md` };
   }
   const ref = process.env.APRON_REF || "main";
   // git, not the GitHub API, which rate-limits shared build machines.
@@ -56,7 +56,8 @@ async function source() {
   const raw = file => get(`https://raw.githubusercontent.com/${repo}/${commit}/${file}`);
   const [markdown, history] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md")]);
   const label = /^[0-9a-f]{40}$/.test(commit) ? commit.slice(0, 7) : commit;
-  return { markdown, history, label, url: `https://github.com/${repo}/blob/${commit}/PROTOCOL.md` };
+  const blob = `https://github.com/${repo}/blob/${commit}`;
+  return { markdown, history, label, url: `${blob}/PROTOCOL.md`, historyUrl: `${blob}/HISTORY.md` };
 }
 
 // How much of the spec an implementation reads. Each tier runs from the section
@@ -119,7 +120,7 @@ function frontMatter(markdown) {
   return { meta, body: markdown.slice(match[0].length) };
 }
 
-function render(markdown, meta) {
+function render(markdown, history, historyUrl) {
   let html = new Marked(gfmHeadingId(), highlight).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
   if (!headings.some(heading => heading.level === 2)) throw new Error("No sections (## headings) in PROTOCOL.md");
@@ -151,16 +152,14 @@ function render(markdown, meta) {
   }
 
   // The contents go after the title, and an older spec's version table under
-  // it, before the introduction. The front matter goes under the title as
-  // GitHub shows it: a table of its keys over their values.
+  // it, before the introduction. Under the title, a link to HISTORY.md names
+  // its newest entry.
   const title = html.match(/^[\s\S]*?<\/h1>\s*(?:<div class="table">[\s\S]*?<\/table><\/div>)?/)?.[0];
   if (!title) throw new Error("No title (# heading) in PROTOCOL.md");
   const split = title.length;
-  const keys = Object.keys(meta);
-  const head = title + (keys.length ? `<div class="table"><table>
-<thead><tr>${keys.map(key => `<th>${escape(key)}</th>`).join("")}</tr></thead>
-<tbody><tr>${keys.map(key => `<td>${escape(meta[key])}</td>`).join("")}</tr></tbody>
-</table></div>\n` : "");
+  const latest = history.match(/^## (v\d+ \(.*?\))$/m)?.[1];
+  if (!latest) throw new Error("No ## vN (date) entry in HISTORY.md");
+  const head = title + `<a class="history" href="${escape(historyUrl)}"><span class="label">Protocol History</span> <b>${escape(latest)}</b><span class="go">HISTORY.md →</span></a>\n`;
   // The rest is the introduction, then each top-level section, without the rule before it.
   const [intro, ...parts] = html.slice(split).split(/(?:<hr>\s*)?(?=<h2 id=")/);
   if (parts.length !== sections.length) throw new Error(`Found ${parts.length} sections in PROTOCOL.md but ${sections.length} ## headings`);
@@ -220,14 +219,13 @@ ${runs.map(r => `<li data-tier="${r.tier.key}"><a href="#${r.sections[0].heading
   return { head, html: body, map, toc: `<ol class="toc">\n${toc.join("\n")}\n</ol>` };
 }
 
-const { markdown, history, label, url } = await source();
+const { markdown, history, label, url, historyUrl } = await source();
 const { meta, body } = frontMatter(markdown);
-const { head, html, map, toc } = render(body, meta);
+const { head, html, map, toc } = render(body, history, historyUrl);
 // The version, from the front matter (or an older spec's version table). Fail
 // rather than publish a page without it.
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!/^\d+$/.test(version ?? "")) throw new Error(`No "version: N" in PROTOCOL.md's front matter at ${label}`);
-if (!history.trim()) throw new Error(`HISTORY.md at ${label} is empty`);
 const values = { head, content: html, map, toc, version, source: label, source_url: url };
 // A placeholder with no value is a typo in the template, or a value the build failed to make.
 const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => {
