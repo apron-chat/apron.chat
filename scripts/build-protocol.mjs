@@ -149,15 +149,14 @@ function render(markdown) {
   // Optional sections: each subsection folds to its heading, a line on what the
   // capability adds, and its length. Without the page's script, they stay open.
   const notes = capabilities(run("optional").sections.map(s => s.html).join(""));
-  const note = (id, length) => notes.has(id) || length
-    ? `<p class="capability">${notes.get(id) ?? ""}${length ? `<span class="length">${count(length)} words</span>` : ""}</p>` : "";
+  const note = id => notes.has(id) ? `<p class="capability">${notes.get(id)}</p>` : "";
   for (const s of run("optional").sections) {
     const [top, ...subsections] = s.html.split(/(?=<h3 id=")/);
     s.html = top + subsections.map(sub => {
       const end = sub.indexOf("</h3>") + "</h3>".length;
       const id = sub.match(/^<h3 id="([^"]+)"/)[1];
       const rest = sub.slice(end).replace(/<h4 id="([^"]+)">[\s\S]*?<\/h4>/g, (h4, id) => h4 + note(id));
-      return `<details class="fold" open>\n<summary>${sub.slice(0, end)}${note(id, words(sub))}<span class="toggle" aria-hidden="true"></span></summary>\n${rest}</details>\n`;
+      return `<details class="fold" open>\n<summary>${sub.slice(0, end)}${note(id)}<span class="bar"><span class="toggle" aria-hidden="true"></span><span class="length">${count(words(sub))} words</span></span></summary>\n${rest}</details>\n`;
     }).join("");
   }
 
