@@ -12,6 +12,7 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { Marked } from "marked";
 import { gfmHeadingId, getHeadingList } from "marked-gfm-heading-id";
 import hljs from "highlight.js/lib/core";
@@ -42,7 +43,7 @@ async function get(url) {
 async function source() {
   if (process.env.APRON_PROTOCOL) {
     const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
-    const history = readFileSync(new URL("HISTORY.md", `file://${process.env.APRON_PROTOCOL}`), "utf8");
+    const history = readFileSync(join(dirname(process.env.APRON_PROTOCOL), "HISTORY.md"), "utf8");
     return { markdown, history, label: "local", url: `https://github.com/${repo}`, historyUrl: `https://github.com/${repo}/blob/main/HISTORY.md` };
   }
   const ref = process.env.APRON_REF || "main";
@@ -159,7 +160,7 @@ function render(markdown, history, historyUrl) {
   const split = title.length;
   const latest = history.match(/^## (v\d+ \(.*?\))$/m)?.[1];
   if (!latest) throw new Error("No ## vN (date) entry in HISTORY.md");
-  const head = title + `<a class="history" href="${escape(historyUrl)}"><span class="label">Protocol History</span> <b>${escape(latest)}</b><span class="go">HISTORY.md →</span></a>\n`;
+  const head = title + `<a class="history" href="${escape(historyUrl)}" target="_blank" rel="noopener"><span class="label">Protocol History</span> <b>${escape(latest)}</b><span class="go">HISTORY.md →</span></a>\n`;
   // The rest is the introduction, then each top-level section, without the rule before it.
   const [intro, ...parts] = html.slice(split).split(/(?:<hr>\s*)?(?=<h2 id=")/);
   if (parts.length !== sections.length) throw new Error(`Found ${parts.length} sections in PROTOCOL.md but ${sections.length} ## headings`);
