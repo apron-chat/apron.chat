@@ -105,6 +105,10 @@ function render(markdown) {
   // Dim // comments in code, such as the arrows in examples and the notes in type sketches.
   html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_, attrs, code) =>
     `<pre><code${attrs}>${code.replace(/(^|\s)(\/\/(?: .*)?)$/gm, '$1<span class="c">$2</span>')}</code></pre>`);
+  // Bold the requirement keywords: MUST and MUST NOT in color, SHOULD and
+  // SHOULD NOT plain. MAY stays as it is. Code and tags are left alone.
+  html = html.replace(/(<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>|<[^>]+>)|\b(MUST|SHOULD)( NOT)?\b/g, (_, skip, word, not = "") =>
+    skip ?? `<strong class="${word.toLowerCase()}">${word}${not}</strong>`);
 
   // Each top-level section, with its subsections, and the tier it belongs to.
   const sections = [];
