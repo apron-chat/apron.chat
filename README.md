@@ -8,7 +8,8 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   `{{version}}`.
 - `/protocol` is [PROTOCOL.md](https://github.com/shazow/apron/blob/main/PROTOCOL.md)
   from shazow/apron, rendered into `public/protocol.html` by `npm run build`
-  with `templates/protocol.html` as its page. The raw Markdown is served at
+  with `templates/protocol.html` as its page, and its code blocks colored by
+  [highlight.js](https://highlightjs.org/). The raw Markdown is served at
   `/protocol.md`. These are generated, not committed.
 - `public/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
   hand-edited. `npm run build` also writes `public/llms-full.txt`: the index,

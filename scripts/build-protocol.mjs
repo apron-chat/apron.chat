@@ -14,9 +14,23 @@ import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { Marked } from "marked";
 import { gfmHeadingId, getHeadingList } from "marked-gfm-heading-id";
+import hljs from "highlight.js/lib/core";
+import json from "highlight.js/lib/languages/json";
+import typescript from "highlight.js/lib/languages/typescript";
 
 const repo = "shazow/apron";
 const at = path => new URL(`../${path}`, import.meta.url);
+
+// The languages the spec's code blocks use: json and jsonc, and ts.
+hljs.registerLanguage("json", json);
+hljs.registerLanguage("typescript", typescript);
+// Code blocks colored by highlight.js, at build time. A block in another
+// language is left plain.
+const escape = text => text.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const highlight = { renderer: { code({ text, lang }) {
+  const code = lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }).value : escape(text);
+  return `<pre><code${lang ? ` class="language-${escape(lang)}"` : ""}>${code}</code></pre>\n`;
+} } };
 
 async function get(url) {
   const response = await fetch(url, { headers: { "User-Agent": "apron.chat-build" } });
@@ -91,7 +105,7 @@ function capabilities(html) {
 }
 
 function render(markdown) {
-  let html = new Marked(gfmHeadingId()).parse(markdown);
+  let html = new Marked(gfmHeadingId(), highlight).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
   if (!headings.some(heading => heading.level === 2)) throw new Error("No sections (## headings) in PROTOCOL.md");
 
@@ -102,9 +116,6 @@ function render(markdown) {
     (level === "2" ? '<a class="up" href="#contents">↑ contents</a>' : "") + `</h${level}>`);
   // Wide tables scroll on their own instead of widening the page.
   html = html.replace(/<table>/g, '<div class="table"><table>').replace(/<\/table>/g, "</table></div>");
-  // Dim // comments in code, such as the arrows in examples and the notes in type sketches.
-  html = html.replace(/<pre><code([^>]*)>([\s\S]*?)<\/code><\/pre>/g, (_, attrs, code) =>
-    `<pre><code${attrs}>${code.replace(/(^|\s)(\/\/(?: .*)?)$/gm, '$1<span class="c">$2</span>')}</code></pre>`);
   // Bold the requirement keywords: MUST and MUST NOT in color, SHOULD and
   // SHOULD NOT plain. MAY stays as it is. Code and tags are left alone.
   html = html.replace(/(<pre>[\s\S]*?<\/pre>|<code>[\s\S]*?<\/code>|<[^>]+>)|\b(MUST|SHOULD)( NOT)?\b/g, (_, skip, word, not = "") =>
