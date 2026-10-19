@@ -71,20 +71,19 @@ function numbers(sections, short) {
   ].filter(Boolean).join(short ? ", " : " and ");
 }
 
-// A line under each capability's heading: how a server turns it on, what it
-// adds and what clients do without it. These come from the table in the
-// Capabilities section (| capability | adds | fallback | spec |), and for
-// features with no capability, from the list after it.
+// A line under each capability's heading: what it adds and what clients do
+// without it, from the table in the Capabilities section
+// (| capability | adds | fallback | spec |). For features with no capability,
+// how a server turns them on, from the list after it.
 function capabilities(html) {
   const notes = new Map();
   for (const [, table] of html.matchAll(/<table>([\s\S]*?)<\/table>/g)) {
     const head = [...table.matchAll(/<th>([\s\S]*?)<\/th>/g)].map(m => m[1]);
     if (head.join() !== "capability,adds,fallback,spec") continue;
     for (const [, row] of table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
-      const [name, adds, fallback, spec] = [...row.matchAll(/<td>([\s\S]*?)<\/td>/g)].map(m => m[1]);
+      const [, adds, fallback, spec] = [...row.matchAll(/<td>([\s\S]*?)<\/td>/g)].map(m => m[1]);
       const id = spec?.match(/href="#([^"]+)"/)?.[1];
-      if (id) notes.set(id, `<span class="how">${name} in <code>server.capabilities</code></span>` +
-        `<span><i>Adds</i> ${adds}</span><span><i>Without it</i> ${fallback}</span>`);
+      if (id) notes.set(id, `<span><i>Adds</i> ${adds}</span><span><i>Without it</i> ${fallback}</span>`);
     }
   }
   if (!notes.size) throw new Error("No capability table (| capability | adds | fallback | spec |) in the Capabilities section");
