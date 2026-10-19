@@ -104,7 +104,22 @@ function capabilities(html) {
   return notes;
 }
 
-function render(markdown) {
+// The spec's front matter: "key: value" lines between --- rules, and the
+// Markdown after it. A spec from before front matter has none, and a
+// | Protocol Version | N | table under its title instead.
+function frontMatter(markdown) {
+  const match = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+  if (!match) return { meta: {}, body: markdown };
+  const meta = {};
+  for (const line of match[1].split("\n")) {
+    const [, key, value] = line.match(/^(\w+): (.+)$/) ?? [];
+    if (!key) throw new Error(`Front matter line "${line}" in PROTOCOL.md is not "key: value"`);
+    meta[key] = value;
+  }
+  return { meta, body: markdown.slice(match[0].length) };
+}
+
+function render(markdown, meta) {
   let html = new Marked(gfmHeadingId(), highlight).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
   if (!headings.some(heading => heading.level === 2)) throw new Error("No sections (## headings) in PROTOCOL.md");
@@ -135,11 +150,17 @@ function render(markdown) {
     for (const s of sections.slice(at)) s.tier = tier;
   }
 
-  // The contents go after the title and version table, before the introduction.
-  const table = html.indexOf("</table></div>");
-  if (table < 0) throw new Error("No version table at the top of PROTOCOL.md");
-  const split = table + "</table></div>".length;
-  const head = html.slice(0, split);
+  // The contents go after the title, and an older spec's version table under
+  // it, before the introduction. The front matter goes under the title as
+  // GitHub shows it: a table of its keys over their values.
+  const title = html.match(/^[\s\S]*?<\/h1>\s*(?:<div class="table">[\s\S]*?<\/table><\/div>)?/)?.[0];
+  if (!title) throw new Error("No title (# heading) in PROTOCOL.md");
+  const split = title.length;
+  const keys = Object.keys(meta);
+  const head = title + (keys.length ? `<div class="table"><table>
+<thead><tr>${keys.map(key => `<th>${escape(key)}</th>`).join("")}</tr></thead>
+<tbody><tr>${keys.map(key => `<td>${escape(meta[key])}</td>`).join("")}</tr></tbody>
+</table></div>\n` : "");
   // The rest is the introduction, then each top-level section, without the rule before it.
   const [intro, ...parts] = html.slice(split).split(/(?:<hr>\s*)?(?=<h2 id=")/);
   if (parts.length !== sections.length) throw new Error(`Found ${parts.length} sections in PROTOCOL.md but ${sections.length} ## headings`);
@@ -200,10 +221,12 @@ ${runs.map(r => `<li data-tier="${r.tier.key}"><a href="#${r.sections[0].heading
 }
 
 const { markdown, history, label, url } = await source();
-const { head, html, map, toc } = render(markdown);
-// The version table at the top of the spec. Fail rather than publish a page without it.
-const version = markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
-if (!version) throw new Error(`No "| Protocol Version | N |" row in PROTOCOL.md at ${label}`);
+const { meta, body } = frontMatter(markdown);
+const { head, html, map, toc } = render(body, meta);
+// The version, from the front matter (or an older spec's version table). Fail
+// rather than publish a page without it.
+const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
+if (!/^\d+$/.test(version ?? "")) throw new Error(`No "version: N" in PROTOCOL.md's front matter at ${label}`);
 if (!history.trim()) throw new Error(`HISTORY.md at ${label} is empty`);
 const values = { head, content: html, map, toc, version, source: label, source_url: url };
 // A placeholder with no value is a typo in the template, or a value the build failed to make.
