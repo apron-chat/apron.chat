@@ -255,8 +255,7 @@ body.spec { overflow-x: clip; }
 .prose .tier[data-tier="draft"]::before { background: repeating-linear-gradient(-45deg, var(--informative-paper) 0 12px, var(--paper) 12px 24px); border-top-style: dashed; }
 .prose .tier-tab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0; padding-top: 40px; font-size: 13px; line-height: 1.5; }
 .tier-tab b { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: var(--tier); padding: 2px 10px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
-.tier-tab span { flex: 1 1 30ch; min-width: 0; }
-.tier-tab .share { flex: 0 0 auto; color: var(--muted); }
+.tier-tab .share { margin-left: auto; color: var(--muted); }
 .prose .tier-tab + h2 { margin-top: 28px; }
 .prose .tier h2 { border-bottom-color: var(--tier); }
 .prose .tier[data-tier="optional"] :is(h2, h3) { color: var(--server); }

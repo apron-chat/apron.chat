@@ -47,28 +47,22 @@ async function source() {
 
 // How much of the spec an implementation reads. Each tier runs from the section
 // that starts it to the next tier's, and the first starts at the first section.
-// `about` says what the tier is, given its sections, such as "§1–3".
 const tiers = [
-  { key: "required", name: "Required", about: s => `${s}. Every server implements these, and every client can rely on them.` },
-  { key: "optional", name: "Optional", starts: /^\d+\. Capabilities$/,
-    about: s => `${s}. Each capability stands alone and says what to do without it. Read the ones you build.` },
-  { key: "informative", name: "Informative", starts: /^\d+\. Security considerations$/,
-    about: s => `${s}. Background and worked examples. No new rules.` },
-  { key: "draft", name: "Draft", starts: /^Appendix [A-Z] — Under consideration$/, about: s => `${s}. Not part of the protocol yet.` },
+  { key: "required", name: "Required" },
+  { key: "optional", name: "Optional", starts: /^\d+\. Capabilities$/ },
+  { key: "informative", name: "Informative", starts: /^\d+\. Security considerations$/ },
+  { key: "draft", name: "Draft", starts: /^Appendix [A-Z] — Under consideration$/ },
 ];
 
 const words = html => html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
 const count = n => n.toLocaleString("en-US");
 
-// Sections by number, such as "§1–3" and "Appendices A–B", or short, "§1–3" and "A–B".
-function numbers(sections, short) {
+// Sections by number, such as "§1–3" or "§5, A–B".
+function numbers(sections) {
   const span = list => list.length > 1 ? `${list[0]}–${list.at(-1)}` : list[0];
   const numbered = sections.map(s => s.heading.raw.match(/^(\d+)\./)?.[1]).filter(Boolean);
   const lettered = sections.map(s => s.heading.raw.match(/^Appendix ([A-Z])/)?.[1]).filter(Boolean);
-  return [
-    numbered.length && `§${span(numbered)}`,
-    lettered.length && (short ? span(lettered) : `Appendi${lettered.length > 1 ? "ces" : "x"} ${span(lettered)}`),
-  ].filter(Boolean).join(short ? ", " : " and ");
+  return [numbered.length && `§${span(numbered)}`, lettered.length && span(lettered)].filter(Boolean).join(", ");
 }
 
 // A line under each capability's heading: what it adds and what clients do
@@ -163,16 +157,16 @@ function render(markdown) {
     }).join("");
   }
 
-  // Each tier under a tab that names it and says how long it is.
+  // Each tier under a tab that names it, with its length.
   const body = intro + runs.map(r =>
-    `<div class="tier" data-tier="${r.tier.key}">\n<p class="tier-tab"><b>${r.tier.name}</b><span>${r.tier.about(numbers(r.sections))}</span><span class="share">${r.share}</span></p>\n` +
+    `<div class="tier" data-tier="${r.tier.key}">\n<p class="tier-tab"><b>${r.tier.name}</b><span class="share">${r.share}</span></p>\n` +
     r.sections.map(s => s.html).join("") + "</div>\n").join("");
 
   // Above the contents, the tiers drawn to scale by length.
   const map = `<div class="map">
 <div class="map-bar">${runs.map(r => `<a href="#${r.sections[0].heading.id}" data-tier="${r.tier.key}" style="flex-grow: ${r.words}" aria-label="${r.tier.name}: ${r.share}"></a>`).join("")}</div>
 <ul>
-${runs.map(r => `<li data-tier="${r.tier.key}"><a href="#${r.sections[0].heading.id}"><b>${r.tier.name}</b> <span>${numbers(r.sections, true)}</span></a></li>`).join("\n")}
+${runs.map(r => `<li data-tier="${r.tier.key}"><a href="#${r.sections[0].heading.id}"><b>${r.tier.name}</b> <span>${numbers(r.sections)}</span></a></li>`).join("\n")}
 </ul>
 </div>`;
 
