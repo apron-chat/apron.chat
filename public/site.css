@@ -266,6 +266,7 @@ body.spec { overflow-x: clip; }
 .prose .capability { display: flex; flex-wrap: wrap; gap: 2px 20px; margin: -4px 0 16px; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .capability i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--server); margin-right: 0.6ch; }
 .capability .how { color: var(--ink); }
+.capability .adds { flex-basis: 100%; }
 .prose .fold-all { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 14px; font-size: 13px; }
 .fold-all button { font: inherit; min-height: 36px; padding: 0 12px; border: 1px solid var(--ink); background: #fff; cursor: pointer; }
 .fold-all button:hover { background: var(--chip); }

@@ -77,7 +77,7 @@ function capabilities(html) {
     for (const [, row] of table.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
       const [, adds, fallback, spec] = [...row.matchAll(/<td>([\s\S]*?)<\/td>/g)].map(m => m[1]);
       const id = spec?.match(/href="#([^"]+)"/)?.[1];
-      if (id) notes.set(id, `<span><i>Adds</i> ${adds}</span><span><i>Without it</i> ${fallback}</span>`);
+      if (id) notes.set(id, `<span class="adds"><i>Adds</i> ${adds}</span><span><i>Without it</i> ${fallback}</span>`);
     }
   }
   if (!notes.size) throw new Error("No capability table (| capability | adds | fallback | spec |) in the Capabilities section");
