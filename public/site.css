@@ -11,6 +11,11 @@
   --server: #1f5a9e;
   --scaffold: #6e6c64;
   --id-bg: #e0ddd0;
+  /* The spec's tiers: optional sections on blue paper, informative on grey. */
+  --required-tint: #f2e2d8;
+  --optional-paper: #edf1f6;
+  --optional-tint: #dce5ef;
+  --informative-paper: #f1f0eb;
 }
 * { box-sizing: border-box; }
 body {
@@ -143,6 +148,13 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .toc .l4 { padding-left: 4ch; }
 .toc .l4 a { color: var(--muted); }
 .toc code { background: none; padding: 0; font-size: inherit; }
+/* Each tier's name above its sections, and a rule down the side of each entry. */
+.toc .label { break-after: avoid; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tier); border-top: 2px solid var(--tier); padding-top: 4px; }
+.toc > li[data-tier]:not(.label) { border-left: 3px solid var(--tier); padding-left: 1ch; }
+.toc > li[data-tier="informative"]:not(.label), .toc > li[data-tier="draft"]:not(.label) { border-left-style: dotted; }
+.toc > li[data-tier="optional"] a { color: var(--server); }
+.toc > li[data-tier="informative"] a, .toc > li[data-tier="draft"] a { color: var(--muted); }
+.toc .folded { display: none; }
 
 .prose .contents { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); padding: 14px 0 6px; margin: 0 0 32px; scroll-margin-top: 16px; }
 .prose .contents-title { font-weight: 700; margin: 0 0 10px; }
@@ -150,6 +162,7 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .prose .toc, .prose .toc ol { padding-left: 0; margin: 0; }
 .prose .toc li { margin-bottom: 0; }
 .prose .toc > li { margin-bottom: 10px; }
+.prose .toc > li.label { margin-bottom: 6px; }
 
 /* The bar: hidden until the contents above scroll away (the script shows it). */
 .crumbs { display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 10; background: var(--code-bg); border-bottom: 1px solid var(--ink); font-size: 13px; }
@@ -164,6 +177,19 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .crumbs .top { color: var(--muted); white-space: nowrap; }
 .crumbs .panel { position: absolute; top: calc(100% + 6px); left: 20px; right: 20px; max-height: calc(100vh - 72px); overflow-y: auto; background: #fff; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 16px 20px 6px; }
 .crumbs .panel a[aria-current] { color: var(--accent); font-weight: 700; background: var(--chip); }
+/* The bar takes the color of the tier you're in, names it, and shows a meter
+   of the page by tier with a mark where you are (the script sets these). */
+.crumbs { transition: background-color 0.2s; }
+[data-tier="required"] .crumbs { background: var(--required-tint); }
+[data-tier="optional"] .crumbs { background: var(--optional-tint); }
+[data-tier="informative"] .crumbs, [data-tier="draft"] .crumbs { background: var(--informative-paper); }
+.crumbs .tier-pill:empty { display: none; }
+.crumbs .tier-pill { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--tier); border: 1px solid var(--ink); }
+.crumbs .meter { display: flex; position: absolute; left: 0; right: 0; bottom: -1px; height: 5px; background: var(--rule); }
+.crumbs .meter span { background: var(--tier); opacity: 0.35; }
+.crumbs .meter span.on { opacity: 1; }
+.crumbs .meter i { position: absolute; top: -3px; width: 3px; height: 11px; margin-left: -1px; background: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .crumbs { transition: none; } }
 
 .doc .source { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 
@@ -196,3 +222,71 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .prose th, .prose td { text-align: left; vertical-align: top; padding: 6px 12px; border-bottom: 1px solid var(--rule); }
 .prose th { background: var(--chip); border-bottom-color: var(--ink); }
 .prose tr:last-child td { border-bottom: 0; }
+
+/* The spec's tiers: required, optional, informative and draft. Each sets
+   --tier for its color, wherever data-tier is. */
+[data-tier="required"] { --tier: var(--accent); }
+[data-tier="optional"] { --tier: var(--server); }
+[data-tier="informative"], [data-tier="draft"] { --tier: var(--scaffold); }
+/* The full-width paper behind each tier would widen the page by a scrollbar. */
+body.spec { overflow-x: clip; }
+
+/* Above the contents: the tiers to scale, and a key. */
+.map { margin: 0 0 22px; }
+.map-bar { display: flex; height: 14px; border: 2px solid var(--ink); background: #fff; }
+.map-bar a { min-width: 6px; background: var(--tier); border-right: 2px solid var(--ink); }
+.map-bar a:last-child { border-right: 0; }
+.map-bar a[data-tier="informative"] { background: repeating-linear-gradient(90deg, var(--scaffold) 0 2px, var(--informative-paper) 2px 5px); }
+.map-bar a[data-tier="draft"] { background: repeating-linear-gradient(-45deg, var(--scaffold) 0 2px, #fff 2px 6px); }
+.map-bar a:hover { filter: brightness(1.2); }
+.prose .map ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 20px; font-size: 13px; line-height: 1.45; }
+.prose .map li { position: relative; margin: 0; padding-left: 18px; }
+.map li::before { content: ""; position: absolute; left: 0; top: 4px; width: 10px; height: 10px; background: var(--tier); border: 1px solid var(--ink); }
+.map li a { color: var(--ink); text-decoration: none; }
+.map li span { white-space: nowrap; }
+.map li a:hover b { text-decoration: underline; }
+.map li[data-tier="required"] b, .map li[data-tier="optional"] b { color: var(--tier); }
+
+/* Each tier on its own paper, edge to edge, under a tab that names it. */
+.prose .tier { position: relative; isolation: isolate; padding-bottom: 48px; }
+.prose .tier::before { content: ""; position: absolute; inset: 0 auto 0 50%; width: 100vw; transform: translateX(-50%); z-index: -1; border-top: 2px solid var(--tier); }
+.prose .tier[data-tier="optional"]::before { background: var(--optional-paper); }
+.prose .tier[data-tier="informative"]::before { background: var(--informative-paper); }
+.prose .tier[data-tier="draft"]::before { background: repeating-linear-gradient(-45deg, var(--informative-paper) 0 12px, var(--paper) 12px 24px); border-top-style: dashed; }
+.prose .tier-tab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0; padding-top: 40px; font-size: 13px; line-height: 1.5; }
+.tier-tab b { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; background: var(--tier); padding: 2px 10px; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+.tier-tab span { flex: 1 1 30ch; min-width: 0; }
+.tier-tab .share { flex: 0 0 auto; color: var(--muted); }
+.prose .tier-tab + h2 { margin-top: 28px; }
+.prose .tier h2 { border-bottom-color: var(--tier); }
+.prose .tier[data-tier="optional"] :is(h2, h3) { color: var(--server); }
+
+/* After the required tier: the end of what an implementation needs. */
+.prose .finish { position: relative; margin: 72px 0 8px; padding: 22px 24px 24px; background: #fff; border: 2px solid var(--ink); box-shadow: 6px 6px 0 var(--accent); }
+.finish::before { content: ""; position: absolute; left: -2px; right: -2px; top: -12px; height: 10px; background: repeating-conic-gradient(var(--ink) 0 25%, #fff 0 50%) 0 0 / 10px 10px; border: 2px solid var(--ink); border-bottom: 0; }
+.prose .finish p { margin: 0 0 12px; }
+.finish .kicker { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.prose .finish .kicker { margin-bottom: 4px; }
+.finish .title { font-size: 21px; font-weight: 700; line-height: 1.3; text-wrap: balance; }
+.prose .finish .links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin: 16px 0 0; }
+
+/* Optional capabilities: a line on what each adds, and folds (the script
+   closes them; without it they stay open). */
+.prose .capability { display: flex; flex-wrap: wrap; gap: 2px 20px; margin: -4px 0 16px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.capability i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--server); margin-right: 0.6ch; }
+.capability .how { color: var(--ink); }
+.prose .fold-all { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 14px; font-size: 13px; }
+.fold-all button { font: inherit; min-height: 36px; padding: 0 12px; border: 1px solid var(--ink); background: #fff; cursor: pointer; }
+.fold-all button:hover { background: var(--chip); }
+.prose details.fold { margin: 0 0 14px; padding: 0 18px 6px; background: #fff; border: 1px solid var(--ink); }
+.prose details.fold[open] { box-shadow: 4px 4px 0 var(--server); }
+.fold summary { display: block; list-style: none; cursor: pointer; padding-bottom: 8px; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary:hover h3 { color: var(--ink); }
+.fold summary:focus-visible { outline: 2px solid var(--server); outline-offset: 4px; }
+.prose .fold summary h3 { margin-top: 16px; }
+.prose .fold summary .capability { margin-bottom: 8px; }
+.fold .toggle { font-size: 13px; color: var(--server); text-decoration: underline; }
+.fold .toggle::before { content: "▸ Show section"; }
+.fold[open] .toggle::before { content: "▾ Hide section"; }
+.fold[open] > summary { margin-bottom: 14px; border-bottom: 1px dashed var(--rule); }

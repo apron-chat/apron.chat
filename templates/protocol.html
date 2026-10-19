@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap">
 <link rel="stylesheet" href="/site.css">
 </head>
-<body>
+<body class="spec">
 
 <header class="top">
 <nav aria-label="Primary">
@@ -26,6 +26,7 @@
 
 <div class="crumbs" aria-label="Where you are">
 <div class="wrap">
+<span class="tier-pill"></span>
 <details>
 <summary><span class="where">Contents</span></summary>
 <nav class="panel" aria-label="Contents">
@@ -33,6 +34,7 @@
 </nav>
 </details>
 <a class="top" href="#">↑ top</a>
+<div class="meter" aria-hidden="true"></div>
 </div>
 </div>
 
@@ -42,6 +44,7 @@
 {{head}}
 <nav class="contents" id="contents" aria-labelledby="contents-title">
 <p id="contents-title" class="contents-title">Table of Contents</p>
+{{map}}
 {{toc}}
 </nav>
 {{content}}
@@ -56,16 +59,23 @@
 </footer>
 
 <script>
-// Once the contents at the top scroll away, a bar shows where you are, and
-// opens the contents again as a dropdown. Without this script, the contents
-// at the top and the "↑ contents" links still work.
+// Once the contents at the top scroll away, a bar shows where you are, which
+// tier of the spec that is, and how far through the page, and opens the
+// contents again as a dropdown. The optional capabilities start folded, and
+// open when a link leads into one. Without this script, the contents at the
+// top and the "↑ contents" links still work, and nothing is folded.
 (() => {
+  const root = document.documentElement;
   const bar = document.querySelector(".crumbs");
   const details = bar.querySelector("details");
   const where = bar.querySelector(".where");
+  const pill = bar.querySelector(".tier-pill");
+  const meter = bar.querySelector(".meter");
   const links = new Map([...bar.querySelectorAll('.panel a[href^="#"]')].map(a => [a.hash.slice(1), a]));
   const headings = [...document.querySelectorAll(".prose h2[id], .prose h3[id], .prose h4[id]")].filter(h => links.has(h.id));
   const label = heading => links.get(heading.id).textContent;
+  const tiers = [...document.querySelectorAll(".prose .tier")];
+  const folds = [...document.querySelectorAll(".prose details.fold")];
 
   new IntersectionObserver(([entry]) => {
     const past = !entry.isIntersecting && entry.boundingClientRect.top < 0;
@@ -77,24 +87,75 @@
   function update() {
     let section = null, current = null;
     for (const heading of headings) {
+      if (!heading.getClientRects().length) continue; // folded away
       if (heading.getBoundingClientRect().top > 80) break;
       if (heading.tagName === "H2") section = heading;
       current = heading;
     }
+    mark.style.left = `${(100 * Math.min(1, Math.max(0, (scrollY + 80 - span[0]) / (span[1] - span[0])))).toFixed(2)}%`;
     if (current === shown) return;
     shown = current;
+    const tier = current?.closest(".tier");
+    if (tier) root.dataset.tier = tier.dataset.tier; else delete root.dataset.tier;
+    pill.textContent = tier ? tier.querySelector(".tier-tab b").textContent : "";
+    meter.querySelectorAll("span").forEach((segment, i) => segment.classList.toggle("on", tiers[i] === tier));
     bar.querySelectorAll("[aria-current]").forEach(a => a.removeAttribute("aria-current"));
     if (!current) return void (where.textContent = "Contents");
     where.textContent = section && section !== current ? `${label(section)} / ${label(current)}` : label(current);
     links.get(current.id).setAttribute("aria-current", "location");
   }
+
+  // The meter: the page from the first section to the end, a segment for each
+  // tier, and a mark where you are. Measured again when folds open or close.
+  let span = [0, 1];
+  const mark = document.createElement("i");
+  function measure() {
+    const top = tiers[0].getBoundingClientRect().top + scrollY;
+    const bottom = tiers.at(-1).getBoundingClientRect().bottom + scrollY;
+    span = [top, bottom];
+    meter.replaceChildren(...tiers.map(tier => {
+      const segment = document.createElement("span");
+      segment.dataset.tier = tier.dataset.tier;
+      segment.style.width = `${(100 * tier.offsetHeight / (bottom - top)).toFixed(2)}%`;
+      return segment;
+    }), mark);
+    shown = undefined;
+    update();
+  }
+
+  // Fold the capabilities, except one a link leads into. A link or find in
+  // page into a closed one opens it.
+  const reveal = id => {
+    const fold = id && document.getElementById(decodeURIComponent(id))?.closest("details.fold");
+    if (fold) fold.open = true;
+  };
+  for (const fold of folds) fold.open = false;
+  reveal(location.hash.slice(1));
+  document.addEventListener("click", event => {
+    const a = event.target.closest('a[href^="#"]');
+    if (a) reveal(a.hash.slice(1));
+  }, true);
+  addEventListener("hashchange", () => reveal(location.hash.slice(1)));
+  for (const fold of folds) fold.addEventListener("toggle", measure);
+  if (folds.length) {
+    const all = document.createElement("p");
+    all.className = "fold-all";
+    all.innerHTML = '<button type="button" data-open="true">Open all capabilities</button><button type="button">Close all</button>';
+    all.addEventListener("click", event => {
+      const button = event.target.closest("button");
+      if (button) for (const fold of folds) fold.open = !!button.dataset.open;
+    });
+    folds[0].before(all);
+  }
+
   let queued = false;
   addEventListener("scroll", () => {
     if (queued) return;
     queued = true;
     requestAnimationFrame(() => { queued = false; update(); });
   }, { passive: true });
-  update();
+  addEventListener("resize", measure);
+  measure();
 
   // Close the dropdown after choosing a section, on Escape, or on a click elsewhere.
   bar.addEventListener("click", event => { if (event.target.closest(".panel a")) details.open = false; });

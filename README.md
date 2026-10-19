@@ -33,9 +33,17 @@ npx wrangler dev        # runs npm run build, then serves http://localhost:8787
 to render another branch, tag or commit, or `APRON_PROTOCOL=../apron/PROTOCOL.md`
 to render a local copy.
 
+The spec page sorts the top-level sections into tiers by their headings:
+required from the first section, optional from "N. Capabilities",
+informative from "N. Security considerations", and draft from "Appendix X —
+Under consideration". Each tier gets its own paper color, and the
+capabilities fold to a line each, taken from the capability table
+(`| capability | adds | fallback | spec |`) in the Capabilities section.
+
 The build fails, before writing anything, if it can't fetch the spec or
 resolve the ref, if the spec has no sections or `| Protocol Version | N |`
-row, or if a template has a `{{placeholder}}` it has no value for. Workers
+row, if a tier's heading or the capability table is missing, or if a
+template has a `{{placeholder}}` it has no value for. Workers
 Builds then keeps the last good deploy.
 
 ## Protocol frames
