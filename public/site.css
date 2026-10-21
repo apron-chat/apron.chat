@@ -189,12 +189,16 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 [data-tier="informative"] .crumbs, [data-tier="draft"] .crumbs { background: var(--informative-paper); }
 .crumbs .tier-pill:empty { display: none; }
 .crumbs .tier-pill { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--tier); border: 1px solid var(--ink); }
-.crumbs .meter { display: flex; position: absolute; left: 0; right: 0; bottom: -1px; height: 5px; background: var(--rule); }
-.crumbs .meter span { background: var(--tier); opacity: 0.35; }
-/* Informative and draft share a color, so each takes its pattern from the map. */
-.crumbs .meter span[data-tier="informative"] { background: repeating-linear-gradient(90deg, var(--scaffold) 0 2px, var(--informative-paper) 2px 5px); }
-.crumbs .meter span[data-tier="draft"] { background: repeating-linear-gradient(-45deg, var(--scaffold) 0 2px, #fff 2px 6px); }
-.crumbs .meter span.on { opacity: 1; }
+.crumbs .meter { display: flex; position: absolute; left: 0; right: 0; bottom: -1px; height: 5px; }
+/* Each segment's color on a layer of its own, faded when you're not in it,
+   and a notch of the bar's own color between segments. Draft shares
+   informative's color, so it takes its hatching from the map. */
+.crumbs .meter span { position: relative; }
+.crumbs .meter span + span { border-left: 2px solid transparent; }
+.crumbs .meter span::before { content: ""; position: absolute; inset: 0; background: var(--tier); opacity: 0.35; }
+.crumbs .meter span[data-tier="informative"]::before { opacity: 0.6; }
+.crumbs .meter span[data-tier="draft"]::before { background: repeating-linear-gradient(-45deg, var(--scaffold) 0 2px, #fff 2px 6px); }
+.crumbs .meter span.on::before { opacity: 1; }
 .crumbs .meter i { position: absolute; top: -3px; width: 3px; height: 11px; margin-left: -1px; background: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .crumbs { transition: none; } }
 
@@ -256,7 +260,6 @@ body.spec { overflow-x: clip; }
 .map-bar { display: flex; height: 14px; border: 2px solid var(--ink); background: #fff; }
 .map-bar a { min-width: 6px; background: var(--tier); border-right: 2px solid var(--ink); }
 .map-bar a:last-child { border-right: 0; }
-.map-bar a[data-tier="informative"] { background: repeating-linear-gradient(90deg, var(--scaffold) 0 2px, var(--informative-paper) 2px 5px); }
 .map-bar a[data-tier="draft"] { background: repeating-linear-gradient(-45deg, var(--scaffold) 0 2px, #fff 2px 6px); }
 .map-bar a:hover { filter: brightness(1.2); }
 .prose .map ul { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 6px 20px; font-size: 13px; line-height: 1.45; }
