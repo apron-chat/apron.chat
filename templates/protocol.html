@@ -77,7 +77,10 @@
   const tiers = [...document.querySelectorAll(".prose .tier")];
   const folds = [...document.querySelectorAll(".prose details.fold")];
 
-  new IntersectionObserver(([entry]) => {
+  // The latest entry: a jump down the page, such as to a link into a fold,
+  // can queue one from before it too.
+  new IntersectionObserver(entries => {
+    const entry = entries.at(-1);
     const past = !entry.isIntersecting && entry.boundingClientRect.top < 0;
     bar.classList.toggle("shown", past);
     if (!past) details.open = false;
@@ -87,7 +90,9 @@
   function update() {
     let section = null, current = null;
     for (const heading of headings) {
-      if (!heading.getClientRects().length) continue; // folded away
+      // Folded away. A closed fold may hide its contents without taking them
+      // out of the layout, so they still have a place on the page.
+      if (!heading.getClientRects().length || heading.closest("details:not([open]) > :not(summary)")) continue;
       if (heading.getBoundingClientRect().top > 80) break;
       if (heading.tagName === "H2") section = heading;
       current = heading;
