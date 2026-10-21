@@ -87,7 +87,9 @@
   function update() {
     let section = null, current = null;
     for (const heading of headings) {
-      if (!heading.getClientRects().length) continue; // folded away
+      // Folded away. A closed fold may hide its contents without taking them
+      // out of the layout, so they still have a place on the page.
+      if (!heading.getClientRects().length || heading.closest("details:not([open]) > :not(summary)")) continue;
       if (heading.getBoundingClientRect().top > 80) break;
       if (heading.tagName === "H2") section = heading;
       current = heading;

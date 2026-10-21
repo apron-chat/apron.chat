@@ -191,6 +191,9 @@ a.card:hover { box-shadow: 4px 4px 0 var(--ink); color: var(--ink); }
 .crumbs .tier-pill { flex: 0 0 auto; padding: 2px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--tier); border: 1px solid var(--ink); }
 .crumbs .meter { display: flex; position: absolute; left: 0; right: 0; bottom: -1px; height: 5px; background: var(--rule); }
 .crumbs .meter span { background: var(--tier); opacity: 0.35; }
+/* Informative and draft share a color, so each takes its pattern from the map. */
+.crumbs .meter span[data-tier="informative"] { background: repeating-linear-gradient(90deg, var(--scaffold) 0 2px, var(--informative-paper) 2px 5px); }
+.crumbs .meter span[data-tier="draft"] { background: repeating-linear-gradient(-45deg, var(--scaffold) 0 2px, #fff 2px 6px); }
 .crumbs .meter span.on { opacity: 1; }
 .crumbs .meter i { position: absolute; top: -3px; width: 3px; height: 11px; margin-left: -1px; background: var(--ink); }
 @media (prefers-reduced-motion: reduce) { .crumbs { transition: none; } }
