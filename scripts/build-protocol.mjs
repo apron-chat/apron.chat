@@ -1,11 +1,12 @@
 // Renders PROTOCOL.md from shazow/apron into public/protocol.html, served at
 // /protocol, and copies the Markdown to public/protocol.md. Also writes
-// public/index.html from templates/index.html with the spec's version, and
-// public/llms-full.txt: public/llms.txt followed by PROTOCOL.md and HISTORY.md.
+// public/index.html from templates/index.html with the spec's version and
+// FAQ.md's questions, and public/llms-full.txt: public/llms.txt followed by PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
-// APRON_PROTOCOL renders a local file instead, such as ../apron/PROTOCOL.md.
+// APRON_PROTOCOL renders a local file instead, such as ../apron/PROTOCOL.md,
+// with the HISTORY.md and FAQ.md beside it.
 //
 // Anything missing fails the build before it writes a file, so a deploy keeps
 // the last good site rather than publishing a broken one.
@@ -43,8 +44,10 @@ async function get(url) {
 async function source() {
   if (process.env.APRON_PROTOCOL) {
     const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
-    const history = readFileSync(join(dirname(process.env.APRON_PROTOCOL), "HISTORY.md"), "utf8");
-    return { markdown, history, label: "local", url: `https://github.com/${repo}`, historyUrl: `https://github.com/${repo}/blob/main/HISTORY.md` };
+    const beside = file => readFileSync(join(dirname(process.env.APRON_PROTOCOL), file), "utf8");
+    const main = `https://github.com/${repo}/blob/main`;
+    return { markdown, history: beside("HISTORY.md"), faq: beside("FAQ.md"), label: "local", url: `https://github.com/${repo}`,
+      historyUrl: `${main}/HISTORY.md`, faqUrl: `${main}/FAQ.md` };
   }
   const ref = process.env.APRON_REF || "main";
   // git, not the GitHub API, which rate-limits shared build machines.
@@ -55,10 +58,12 @@ async function source() {
     (/^[0-9a-f]{7,40}$/.test(ref) ? ref : undefined);
   if (!commit) throw new Error(`No branch, tag or commit named ${ref} in ${repo}`);
   const raw = file => get(`https://raw.githubusercontent.com/${repo}/${commit}/${file}`);
-  const [markdown, history] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md")]);
+  const [markdown, history, faq] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md"), raw("FAQ.md")]);
   const label = /^[0-9a-f]{40}$/.test(commit) ? commit.slice(0, 7) : commit;
   const blob = `https://github.com/${repo}/blob/${commit}`;
-  return { markdown, history, label, url: `${blob}/PROTOCOL.md`, historyUrl: `${blob}/HISTORY.md` };
+  return { markdown, history, faq, label, url: `${blob}/PROTOCOL.md`, historyUrl: `${blob}/HISTORY.md`,
+    // The FAQ by the name it was asked for, such as main, so links from the landing page stay readable.
+    faqUrl: `https://github.com/${repo}/blob/${ref}/FAQ.md` };
 }
 
 // How much of the spec an implementation reads. Each tier runs from the section
@@ -220,14 +225,23 @@ ${runs.map(r => `<li data-tier="${r.tier.key}"><a href="#${r.sections[0].heading
   return { head, html: body, map, toc: `<ol class="toc">\n${toc.join("\n")}\n</ol>` };
 }
 
-const { markdown, history, label, url, historyUrl } = await source();
+// The landing page's FAQ: each question (## heading) in FAQ.md, linked to its
+// answer on GitHub, whose heading ids the slugger in marked-gfm-heading-id matches.
+function questions(faq, faqUrl) {
+  new Marked(gfmHeadingId()).parse(faq);
+  const list = getHeadingList().filter(heading => heading.level === 2);
+  if (!list.length) throw new Error("No questions (## headings) in FAQ.md");
+  return `<ul class="faq">\n${list.map(q => `<li><a href="${escape(faqUrl)}#${q.id}">${q.text}</a></li>`).join("\n")}\n</ul>`;
+}
+
+const { markdown, history, faq, label, url, historyUrl, faqUrl } = await source();
 const { meta, body } = frontMatter(markdown);
 const { head, html, map, toc } = render(body, history, historyUrl);
 // The version, from the front matter (or an older spec's version table). Fail
 // rather than publish a page without it.
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!/^\d+$/.test(version ?? "")) throw new Error(`No "version: N" in PROTOCOL.md's front matter at ${label}`);
-const values = { head, content: html, map, toc, version, source: label, source_url: url };
+const values = { head, content: html, map, toc, version, faq: questions(faq, faqUrl), faq_url: faqUrl, source: label, source_url: url };
 // A placeholder with no value is a typo in the template, or a value the build failed to make.
 const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => {
   if (!values[key]) throw new Error(`templates/${template}: no value for {{${key}}}`);
