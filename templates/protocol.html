@@ -162,17 +162,6 @@
   addEventListener("resize", measure);
   measure();
 
-  // Informative's ticks in whole screen pixels: at a scale like 125%, 2px is
-  // 2.5 screen pixels, and the ticks round to 2 or 3. Again when the scale
-  // changes, on zoom or on another screen.
-  function ticks() {
-    const scale = devicePixelRatio;
-    root.style.setProperty("--tick", `${Math.round(2 * scale) / scale}px`);
-    root.style.setProperty("--ticks", `${Math.round(5 * scale) / scale}px`);
-    matchMedia(`(resolution: ${scale}dppx)`).addEventListener("change", ticks, { once: true });
-  }
-  ticks();
-
   // Close the dropdown after choosing a section, on Escape, or on a click elsewhere.
   bar.addEventListener("click", event => { if (event.target.closest(".panel a")) details.open = false; });
   addEventListener("keydown", event => { if (event.key === "Escape") details.open = false; });
