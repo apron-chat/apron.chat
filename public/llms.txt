@@ -1,6 +1,10 @@
 # Apron Chat Protocol
 
-> Apron is a simple chat protocol for small groups whose members mostly trust each other: a team, a household, or a set of bots and the people who run them. JSON frames over a WebSocket. The server is the authority on identity, membership and history. A basic server is about a hundred lines of code, and a stateless bot is a few.
+> Apron is a simple chat protocol that decouples clients from servers: use an existing client with your own backend, or build a new client for existing Apron servers. A basic server is about a hundred lines of code, and a stateless bot is a few.
+
+Use Apron for a self-hosted group chat, an agent interface, or a bridge to another service. It is for small groups whose members mostly trust each other: a team, a household, or a set of bots and the people who run them. The server is trusted with identity, membership, and history. Leaving out public federation and end-to-end encryption keeps custom implementations small. Use TLS to protect the connection between clients and the server; it does not hide messages from the server.
+
+Frames are JSON over a bidirectional transport, with WebSocket as the reference transport.
 
 The protocol is incremental. The mandatory core is enough for a working chat: a `server` greeting, `auth`, identities, rooms as logs, and `message`. Everything else is an optional capability that a server advertises in its `server` frame, each with a fallback for clients and servers that lack it. Nothing is negotiated. Frames use the shape of JSON-RPC 2.0 requests, responses and notifications, without the `jsonrpc` key.
 
