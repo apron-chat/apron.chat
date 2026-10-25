@@ -1,7 +1,8 @@
 // Renders PROTOCOL.md from shazow/apron into public/protocol.html, served at
 // /protocol, and copies the Markdown to public/protocol.md. Also writes
 // public/index.html from templates/index.html with the spec's version and
-// FAQ.md's questions, and public/llms-full.txt: public/llms.txt followed by PROTOCOL.md and HISTORY.md.
+// FAQ.md's questions, and public/llms-full.txt: public/llms.txt followed by
+// PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
