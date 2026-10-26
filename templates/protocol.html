@@ -61,7 +61,8 @@
 <script>
 // Once the contents at the top scroll away, a bar shows where you are, which
 // tier of the spec that is, and how far through the page, and opens the
-// contents again as a dropdown. The optional capabilities start folded, and
+// contents again as a dropdown. The address follows the section you're in.
+// The optional capabilities start folded, and
 // open when a link leads into one. Without this script, the contents at the
 // top and the "↑ contents" links still work, and nothing is folded.
 (() => {
@@ -153,11 +154,24 @@
     folds[0].before(all);
   }
 
+  // The address follows the section you're in, replacing the history entry
+  // rather than adding one, so Back still goes where it did. A link's target
+  // keeps the address while it's on screen below the line, as it is when the
+  // page can't scroll it any higher.
+  function follow() {
+    const top = document.getElementById(decodeURIComponent(location.hash.slice(1)))?.getBoundingClientRect().top;
+    if (top > 80 && top < innerHeight) return;
+    if ((shown?.id ?? "") === decodeURIComponent(location.hash.slice(1))) return;
+    // Safari refuses more than 100 in 10 seconds; a flick through the whole
+    // spec can pass that, and the next section catches up.
+    try { history.replaceState(history.state, "", shown ? `#${shown.id}` : location.pathname + location.search); } catch {}
+  }
+
   let queued = false;
   addEventListener("scroll", () => {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(() => { queued = false; update(); });
+    requestAnimationFrame(() => { queued = false; update(); follow(); });
   }, { passive: true });
   addEventListener("resize", measure);
   measure();
