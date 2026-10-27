@@ -4,4 +4,5 @@ node_modules/
 public/index.html
 public/protocol.html
 public/protocol.md
+public/protocol-*.md
 public/llms-full.txt

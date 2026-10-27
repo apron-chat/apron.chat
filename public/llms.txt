@@ -15,6 +15,10 @@ The full specification is also at https://apron.chat/llms-full.txt, in one file.
 ## Specification
 
 - [PROTOCOL.md](https://apron.chat/protocol.md): The authoritative Apron Chat Protocol definition, current version
+- [Core](https://apron.chat/protocol-core.md): PROTOCOL.md's introduction and required sections (§1–3), enough for a working implementation; the first of four parts for agents that can't read the whole file at once
+- [Capabilities](https://apron.chat/protocol-capabilities.md): PROTOCOL.md's optional capabilities (§4)
+- [Informative](https://apron.chat/protocol-informative.md): PROTOCOL.md's security considerations, conventions and valid scenarios (§5, appendices A–B)
+- [Draft](https://apron.chat/protocol-draft.md): Designs under consideration, not yet part of the protocol (appendix C)
 - [HISTORY.md](https://raw.githubusercontent.com/shazow/apron/main/HISTORY.md): Changes by protocol version
 - [JSON Schema](https://raw.githubusercontent.com/shazow/apron/main/schema/apron.schema.json): An informative JSON Schema of every frame, for validation and editor completion
 - [Wire fixtures](https://raw.githubusercontent.com/shazow/apron/main/tests/fixtures/wire/README.md): Portable JSON scenarios that implementations can test against
