@@ -12,7 +12,9 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   with `templates/protocol.html` as its page, and its code blocks colored by
   [highlight.js](https://highlightjs.org/). The raw Markdown is served at
   `/protocol.md` as `text/plain` (set in `public/_headers`), since some agents
-  won't open `text/markdown`. These are generated, not committed.
+  won't open `text/markdown`, with a comment such as `<!-- #a4-links -->` above
+  each heading so a `/protocol#a4-links` link can be found in it. These are
+  generated, not committed.
 - `public/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
   hand-edited. `npm run build` also writes `public/llms-full.txt`: the index,
   then PROTOCOL.md and HISTORY.md in full.

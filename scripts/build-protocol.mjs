@@ -1,8 +1,8 @@
 // Renders PROTOCOL.md from shazow/apron into public/protocol.html, served at
-// /protocol, and copies the Markdown to public/protocol.md. Also writes
-// public/index.html from templates/index.html with the spec's version and
-// FAQ.md's questions, and public/llms-full.txt: public/llms.txt followed by
-// PROTOCOL.md and HISTORY.md.
+// /protocol, and copies the Markdown to public/protocol.md with each section's
+// id in a comment above its heading. Also writes public/index.html from
+// templates/index.html with the spec's version and FAQ.md's questions, and
+// public/llms-full.txt: public/llms.txt followed by PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
@@ -127,6 +127,20 @@ function frontMatter(markdown) {
   return { meta, body: markdown.slice(match[0].length) };
 }
 
+// The Markdown with each heading's id from the page in a comment above it,
+// such as <!-- #a4-links -->, so an agent reading /protocol.md can find the
+// section a /protocol#a4-links link names.
+function anchored(markdown) {
+  new Marked(gfmHeadingId()).parse(markdown);
+  const ids = getHeadingList().map(heading => heading.id);
+  const tokens = new Marked().lexer(markdown);
+  if (tokens.map(token => token.raw).join("") !== markdown) throw new Error("PROTOCOL.md's tokens don't add up to the file");
+  const headings = tokens.filter(token => token.type === "heading");
+  // A heading inside a list or quote would put every id after it on the wrong section.
+  if (headings.length !== ids.length) throw new Error(`Found ${ids.length} headings in PROTOCOL.md but ${headings.length} at the top level`);
+  return tokens.map(token => (token.type === "heading" ? `<!-- #${ids.shift()} -->\n` : "") + token.raw).join("");
+}
+
 function render(markdown, history, historyUrl) {
   let html = new Marked(gfmHeadingId(), highlight).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
@@ -238,6 +252,8 @@ function questions(faq, faqUrl) {
 const { markdown, history, faq, label, url, historyUrl, faqUrl } = await source();
 const { meta, body } = frontMatter(markdown);
 const { head, html, map, toc } = render(body, history, historyUrl);
+// The spec with its section ids, after the front matter, for agents.
+const spec = markdown.slice(0, markdown.length - body.length) + anchored(body);
 // The version, from the front matter (or an older spec's version table). Fail
 // rather than publish a page without it.
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
@@ -254,8 +270,8 @@ const note = `Rendered from ${url}`;
 const files = {
   "public/protocol.html": fill("protocol.html"),
   "public/index.html": fill("index.html"),
-  "public/protocol.md": markdown,
-  "public/llms-full.txt": [index, `<!-- ${note} -->`, markdown.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
+  "public/protocol.md": spec,
+  "public/llms-full.txt": [index, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
 };
 for (const [path, text] of Object.entries(files)) writeFileSync(at(path), text);
 console.log(`Rendered PROTOCOL.md v${version} from ${repo}@${label} into public/protocol.html`);
