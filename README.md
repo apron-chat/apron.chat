@@ -19,9 +19,11 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   `/protocol-capabilities.md`, `/protocol-informative.md` and
   `/protocol-draft.md`. A note atop each lists the parts and which part holds
   each section it links to. These are generated, not committed.
-- `public/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
-  hand-edited. `npm run build` also writes `public/llms-full.txt`: the index,
-  then PROTOCOL.md and HISTORY.md in full.
+- `/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
+  hand-edited in `templates/llms.txt`. `npm run build` writes it to
+  `public/llms.txt` with each part's section ids filled in for
+  `{{ids_required}}` and the like. It also writes `public/llms-full.txt`: the
+  index, then PROTOCOL.md and HISTORY.md in full.
 - `src/worker.js` serves Markdown to agents that ask for it: `/` and
   `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
   and the spec's Markdown. Every other path is a static file.

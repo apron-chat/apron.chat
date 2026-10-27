@@ -10,15 +10,15 @@ The protocol is incremental. The mandatory core is enough for a working chat: a 
 
 To implement Apron, read PROTOCOL.md, start with the core and its conformance checklist, then add capabilities as needed. Validate frames against the JSON Schema and test against the wire fixtures.
 
-The full specification is also at https://apron.chat/llms-full.txt, in one file. Requesting https://apron.chat/protocol with `Accept: text/markdown` returns the specification as Markdown.
+The full specification is also at https://apron.chat/llms-full.txt, in one file. Each part's Sections are the ids of its headings, such as #42-rooms in https://apron.chat/protocol#42-rooms, and each is in a comment above its heading in the Markdown, such as <!-- #42-rooms -->. Requesting https://apron.chat/protocol with `Accept: text/markdown` returns the specification as Markdown.
 
 ## Specification
 
 - [PROTOCOL.md](https://apron.chat/protocol.md): The authoritative Apron Chat Protocol definition, current version
-- [Core](https://apron.chat/protocol-core.md): PROTOCOL.md's introduction and required sections (§1–3), enough for a working implementation; the first of four parts for agents that can't read the whole file at once
-- [Capabilities](https://apron.chat/protocol-capabilities.md): PROTOCOL.md's optional capabilities (§4)
-- [Informative](https://apron.chat/protocol-informative.md): PROTOCOL.md's security considerations, conventions and valid scenarios (§5, appendices A–B)
-- [Draft](https://apron.chat/protocol-draft.md): Designs under consideration, not yet part of the protocol (appendix C)
+- [Core](https://apron.chat/protocol-core.md): PROTOCOL.md's introduction and required sections (§1–3), enough for a working implementation; the first of four parts for agents that can't read the whole file at once. Sections: {{ids_required}}
+- [Capabilities](https://apron.chat/protocol-capabilities.md): PROTOCOL.md's optional capabilities (§4). Sections: {{ids_optional}}
+- [Informative](https://apron.chat/protocol-informative.md): PROTOCOL.md's security considerations, conventions and valid scenarios (§5, appendices A–B). Sections: {{ids_informative}}
+- [Draft](https://apron.chat/protocol-draft.md): Designs under consideration, not yet part of the protocol (appendix C). Sections: {{ids_draft}}
 - [HISTORY.md](https://raw.githubusercontent.com/shazow/apron/main/HISTORY.md): Changes by protocol version
 - [JSON Schema](https://raw.githubusercontent.com/shazow/apron/main/schema/apron.schema.json): An informative JSON Schema of every frame, for validation and editor completion
 - [Wire fixtures](https://raw.githubusercontent.com/shazow/apron/main/tests/fixtures/wire/README.md): Portable JSON scenarios that implementations can test against

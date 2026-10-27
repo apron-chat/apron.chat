@@ -2,8 +2,9 @@
 // /protocol, and copies the Markdown to public/protocol.md with each section's
 // id in a comment above its heading, and to public/protocol-*.md cut into its
 // tiers. Also writes public/index.html from templates/index.html with the
-// spec's version and FAQ.md's questions, and public/llms-full.txt:
-// public/llms.txt followed by PROTOCOL.md and HISTORY.md.
+// spec's version and FAQ.md's questions, public/llms.txt from
+// templates/llms.txt with the section ids in each part, and
+// public/llms-full.txt: llms.txt followed by PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
@@ -77,6 +78,9 @@ const tiers = [
   { key: "informative", name: "Informative", file: "protocol-informative.md", starts: /^\d+\. Security considerations$/ },
   { key: "draft", name: "Draft", file: "protocol-draft.md", starts: /^Appendix [A-Z] — Under consideration$/ },
 ];
+
+// The ids in a part of the spec from sectioned(), such as ["4-capabilities", "41-command"].
+const anchors = text => [...text.matchAll(/^<!-- #(\S+) -->$/gm)].map(([, id]) => id);
 
 // Sets the tier of each top-level section, by its heading.
 function tier(sections) {
@@ -178,7 +182,7 @@ function parts(front, intro, sections, version) {
     run.text = ((i ? "" : intro) + run.sections.map(s => s.text).join("")).trim().replace(/\n---$/, "").trimEnd() + "\n";
     run.about = `${run.tier.name}: ${numbers(run.sections)} (${Math.round(Buffer.byteLength(run.text) / 1000)} KB)`;
   }
-  const where = new Map(runs.flatMap(run => [...run.text.matchAll(/^<!-- #(\S+) -->$/gm)].map(([, id]) => [id, run.tier.file])));
+  const where = new Map(runs.flatMap(run => anchors(run.text).map(id => [id, run.tier.file])));
   return Object.fromEntries(runs.map((run, i) => {
     // The ids this part links to, by the part they're in, in the spec's order.
     const links = new Set([...run.text.matchAll(/\]\(#([^)\s]+)\)/g)].map(([, id]) => id));
@@ -310,17 +314,23 @@ const spec = front + intro + sections.map(s => s.text).join("");
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!/^\d+$/.test(version ?? "")) throw new Error(`No "version: N" in PROTOCOL.md's front matter at ${label}`);
 const values = { head, content: html, map, toc, version, faq: questions(faq, faqUrl), faq_url: faqUrl, source: label, source_url: url };
+// Each part's section ids for llms.txt, such as {{ids_optional}}: "#4-capabilities #41-command …".
+for (const [i, tier] of tiers.entries()) {
+  values[`ids_${tier.key}`] = anchors((i ? "" : intro) + sections.filter(s => s.tier === tier).map(s => s.text).join(""))
+    .map(id => `#${id}`).join(" ");
+}
 // A placeholder with no value is a typo in the template, or a value the build failed to make.
 const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => {
   if (!values[key]) throw new Error(`templates/${template}: no value for {{${key}}}`);
   return values[key];
 });
 // llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
-const index = readFileSync(at("public/llms.txt"), "utf8").trimEnd();
+const index = fill("llms.txt").trimEnd();
 const note = `Rendered from ${url}`;
 const files = {
   "public/protocol.html": fill("protocol.html"),
   "public/index.html": fill("index.html"),
+  "public/llms.txt": index + "\n",
   "public/protocol.md": spec,
   "public/llms-full.txt": [index, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
   ...parts(front, intro, sections, version),
