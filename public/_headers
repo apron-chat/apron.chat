@@ -1,5 +1,8 @@
 # Serve the spec's Markdown, whole and in parts, as plain text: some agents
 # won't read a text/markdown response. src/worker.js still answers /protocol
 # with text/markdown when the request's Accept header asks for it.
-/*.md
+/protocol.md
+  Content-Type: text/plain; charset=utf-8
+
+/protocol-*.md
   Content-Type: text/plain; charset=utf-8

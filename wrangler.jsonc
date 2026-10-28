@@ -20,11 +20,13 @@
     "command": "npm run build"
   },
   // Only / and /protocol run the Worker, to serve Markdown to agents that ask
-  // for it (src/worker.js). Every other path is a static file.
+  // for it (src/worker.js). Every other path is a static file, and a path with
+  // no file gets public/404.html, which points to the spec.
   "main": "src/worker.js",
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
+    "not_found_handling": "404-page",
     "run_worker_first": ["/", "/protocol"]
   }
 }
