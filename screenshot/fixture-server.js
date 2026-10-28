@@ -50,7 +50,10 @@ function recorded(user) {
 }
 
 for (const room of scene.rooms) {
-  const record = { room_id: room.room_id, log_id: logIdAt(minutesAgo(240)), title: room.title };
+  // A private room without a title is a conversation, which clients name for its members.
+  const record = { room_id: room.room_id, log_id: logIdAt(minutesAgo(240)) };
+  if (room.title) record.title = room.title;
+  if (room.private) record.private = true;
   if (room.description) record.description = room.description;
   if (room.parent_room_id) record.parent_room_id = room.parent_room_id;
   roomsById.set(room.room_id, { ...room, record });

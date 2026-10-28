@@ -1,7 +1,7 @@
 // Takes the landing page's screenshots: for each scene, starts the fixture
 // server, opens an Apron web client against it, waits for the scene to load,
 // and saves public/images/<file>.
-// Run: npm run screenshot [-- <scene> ...]
+// Run: npm run screenshot [-- <shot> ...]
 //
 // CLIENT_URL picks the client (default https://web.apron.chat/, or a local
 // apron-web dev server). PORT picks the fixture's port (default 8765).
@@ -11,17 +11,24 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
-const SCENES = {
-  team: "demo.png",
-  agent: "demo-agent.png",
-  rich: "demo-rich.png",
+// Each shot is a scene (the shot's own name unless it says), the file it's
+// saved to, and how it's taken.
+const SHOTS = {
+  team: { file: "demo.png" },
+  agent: { file: "demo-agent.png" },
+  rich: { file: "demo-rich.png" },
+  // The link preview image (og:image), at the 1200x630 that link cards use.
+  // It names a real-looking server, so its connection is routed to the
+  // fixture; that leaves /files/ and /streams/ URLs on the wrong origin, so
+  // pick a scene without them.
+  og: { scene: "pioneers", file: "og.png", width: 1200, height: 630, colorScheme: "dark", host: "engine.example.com" },
 };
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const port = process.env.PORT || "8765";
 const clientUrl = process.env.CLIENT_URL || "https://web.apron.chat/";
 const chosen = process.argv.slice(2);
-for (const name of chosen) if (!SCENES[name]) throw new Error(`Unknown scene: ${name}`);
+for (const name of chosen) if (!SHOTS[name]) throw new Error(`Unknown shot: ${name}`);
 
 async function waitForServer() {
   for (let i = 0; i < 50; i++) {
@@ -35,21 +42,32 @@ async function waitForServer() {
   throw new Error("Fixture server did not start");
 }
 
-async function capture(browser, name) {
+async function capture(browser, shot) {
+  const { scene: name, file, width = 1280, height = 760, colorScheme = "light", host } = shot;
   const scene = (await import(`./scenes/${name}.js`)).default;
-  const output = fileURLToPath(new URL(`../public/images/${SCENES[name]}`, import.meta.url));
+  const output = fileURLToPath(new URL(`../public/images/${file}`, import.meta.url));
   const server = spawn("bun", [`${here}fixture-server.js`, "--scene", name, "--port", port], { stdio: "inherit" });
   try {
     await waitForServer();
     const page = await browser.newPage({
-      viewport: { width: 1280, height: 760 },
+      viewport: { width, height },
       deviceScaleFactor: 2,
-      colorScheme: "light",
+      colorScheme,
       timezoneId: "UTC",
     });
     // The client only offers a linked server it hasn't used before, so seed it
     // as a recent server, which a link then switches to at once.
-    const chat = `ws://chat.localhost:${port}/`;
+    const chat = host ? `wss://${host}/` : `ws://chat.localhost:${port}/`;
+    if (host) await page.routeWebSocket(chat, route => {
+      // Playwright's connectToServer() only dials the original URL, so relay by hand.
+      const fixture = new WebSocket(`ws://127.0.0.1:${port}/`);
+      const queued = [];
+      fixture.onopen = () => queued.splice(0).forEach(message => fixture.send(message));
+      fixture.onmessage = event => route.send(event.data);
+      fixture.onclose = () => route.close();
+      route.onMessage(message => (fixture.readyState === WebSocket.OPEN ? fixture.send(message) : queued.push(message)));
+      route.onClose(() => fixture.close());
+    });
     await page.addInitScript(chat => {
       localStorage.setItem("apron.serverUrl", chat);
       localStorage.setItem("apron.recentServers", JSON.stringify([{ url: chat }]));
@@ -81,7 +99,7 @@ async function capture(browser, name) {
 const proxy = process.env.HTTPS_PROXY;
 const browser = await chromium.launch({ args: proxy ? [`--proxy-server=${proxy}`, "--proxy-bypass-list=<-loopback>;127.0.0.1;localhost;*.localhost"] : [] });
 try {
-  for (const name of chosen.length ? chosen : Object.keys(SCENES)) await capture(browser, name);
+  for (const name of chosen.length ? chosen : Object.keys(SHOTS)) await capture(browser, { scene: name, ...SHOTS[name] });
 } finally {
   await browser.close();
 }
