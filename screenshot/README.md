@@ -19,7 +19,8 @@ scripted server, so they show lived-in chats without anyone's real messages.
 | `rich` | `demo-rich.png` | an uploaded image, a mention, a link preview, reactions, typing |
 | `og` | `og.png` | the `piper` scene, dark, at 1200x630: the link preview image (`og:image`), with a mention, a terminal stream, replies, a bot, a thread and DMs |
 
-`og.png` is also apron-web's `static/og.png`: copy it there when it changes.
+`og.png` is the landing page's `og:image`, and also apron-web's
+`static/og.png`: copy it there when it changes.
 
 A shot with a `host` shows the server under that name instead of
 `chat.localhost:8765`: the browser resolves the host to the fixture, which
