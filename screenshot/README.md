@@ -8,20 +8,27 @@ scripted server, so they show lived-in chats without anyone's real messages.
   when it starts. It also serves a scene's live streams at `/streams/<name>`
   (they never end, so clients show them as live), its files at
   `/files/<name>`, and typing.
-- `capture.mjs` runs each scene in turn: it starts the fixture, opens the web
-  client against it with Playwright, waits for the scene to load, and saves
-  `public/images/<file>` at 2x.
+- `capture.mjs` takes each shot in turn: it starts the fixture with the shot's
+  scene, opens the web client against it with Playwright, waits for the scene
+  to load, and saves `public/images/<file>` at 2x.
 
-| scene | file | shows |
+| shot | file | shows |
 |---|---|---|
 | `team` | `demo.png` | rooms, a thread, bot and admin badges, replies, a code block, reactions, presence |
 | `agent` | `demo-agent.png` | a coding agent in a thread, with a finished and a live terminal stream (`embed:stream`) |
 | `rich` | `demo-rich.png` | an uploaded image, a mention, a link preview, reactions, typing |
+| `og` | `og.png` | the `piper` scene, dark, at 1200x630: the link preview image (`og:image`), with a mention, a terminal stream, replies, a bot, a thread and DMs |
 
-Each scene in `scenes/<name>.js` defines its users, rooms, a script of
-messages (with optional replies, mentions and embeds), reactions, and
-optionally `streams`, `files` and `typing`, plus the room to open and the
-text to wait for. Paths in messages that start with `/streams/` or `/files/`
+`og.png` is also apron-web's `static/og.png`: copy it there when it changes.
+
+A shot with a `host` shows the server under that name instead of
+`chat.localhost:8765`: the browser resolves the host to the fixture, which
+serves it over TLS with a throwaway certificate (made with `openssl`).
+
+Each scene in `scenes/<name>.js` defines its users, rooms (a `private` room
+without a title is a DM), a script of messages (with optional replies,
+mentions and embeds), reactions, and optionally `streams`, `files` and
+`typing`, plus the room to open and the text to wait for. Paths in messages that start with `/streams/` or `/files/`
 are sent as URLs on the server's own origin, which the client requires for
 streams and images.
 
@@ -30,12 +37,12 @@ pixel-art apron in shazow/apron's `art/`, and a `wss://` badge.
 
 ## Run
 
-Requires [Bun](https://bun.sh) and Node.js.
+Requires [Bun](https://bun.sh), Node.js and, for shots with a `host`, `openssl`.
 
 ```sh
 npm install
-npm run screenshot            # every scene
-npm run screenshot -- agent   # one scene
+npm run screenshot            # every shot
+npm run screenshot -- agent   # one shot
 ```
 
 To look at a scene yourself, run `npm run fixture -- --scene agent` and open

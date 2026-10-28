@@ -1,6 +1,7 @@
 // Scripted Apron Chat v9 server that serves a fixed, realistic scene for
 // screenshots of an Apron client. Requires Bun; no dependencies.
 // Run: bun screenshot/fixture-server.js [--scene team] [--port 8765]
+//        [--tls-cert cert.pem --tls-key key.pem]
 //
 // Scenes live in scenes/<name>.js. Every connection signs in as "ada" and sees
 // the scene's rooms, members, history and reactions. Messages and reactions it
@@ -18,6 +19,9 @@ const arg = (name, fallback) => {
 };
 const port = Number(arg("port", process.env.PORT)) || 8765;
 const sceneName = arg("scene", "team");
+// With a certificate it serves wss:// and https://, for a client that's told
+// the server is at some real-looking host.
+const tls = arg("tls-cert") && { cert: Bun.file(arg("tls-cert")), key: Bun.file(arg("tls-key")) };
 if (!/^[a-z]+$/.test(sceneName)) throw new Error(`Invalid scene: ${sceneName}`);
 const scene = (await import(`./scenes/${sceneName}.js`)).default;
 const { users } = scene;
@@ -50,7 +54,10 @@ function recorded(user) {
 }
 
 for (const room of scene.rooms) {
-  const record = { room_id: room.room_id, log_id: logIdAt(minutesAgo(240)), title: room.title };
+  // A private room without a title is a conversation, which clients name for its members.
+  const record = { room_id: room.room_id, log_id: logIdAt(minutesAgo(240)) };
+  if (room.title) record.title = room.title;
+  if (room.private) record.private = true;
   if (room.description) record.description = room.description;
   if (room.parent_room_id) record.parent_room_id = room.parent_room_id;
   roomsById.set(room.room_id, { ...room, record });
@@ -242,9 +249,10 @@ function serveHttp(url) {
 Bun.serve({
   hostname: "127.0.0.1",
   port,
+  ...(tls && { tls }),
   idleTimeout: 0, // Streams stay open with nothing more to send.
   fetch(request, server) {
-    const origin = `http://${request.headers.get("host") ?? `127.0.0.1:${port}`}`;
+    const origin = `${tls ? "https" : "http"}://${request.headers.get("host") ?? `127.0.0.1:${port}`}`;
     if (server.upgrade(request, { data: { you: null, origin } })) return;
     return serveHttp(new URL(request.url));
   },
@@ -276,4 +284,4 @@ Bun.serve({
   },
 });
 
-console.log(`Apron screenshot fixture, scene "${sceneName}", on ws://127.0.0.1:${port}/`);
+console.log(`Apron screenshot fixture, scene "${sceneName}", on ${tls ? "wss" : "ws"}://127.0.0.1:${port}/`);
