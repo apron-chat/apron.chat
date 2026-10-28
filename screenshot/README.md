@@ -17,7 +17,7 @@ scripted server, so they show lived-in chats without anyone's real messages.
 | `team` | `demo.png` | rooms, a thread, bot and admin badges, replies, a code block, reactions, presence |
 | `agent` | `demo-agent.png` | a coding agent in a thread, with a finished and a live terminal stream (`embed:stream`) |
 | `rich` | `demo-rich.png` | an uploaded image, a mention, a link preview, reactions, typing |
-| `og` | `og.png` | the `pioneers` scene, dark, at 1200x630: the link preview image (`og:image`) |
+| `og` | `og.png` | the `piper` scene, dark, at 1200x630: the link preview image (`og:image`), with a mention, a terminal stream, replies, a bot, a thread and DMs |
 
 `og.png` is also apron-web's `static/og.png`: copy it there when it changes.
 

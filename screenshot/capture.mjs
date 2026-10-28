@@ -24,7 +24,7 @@ const SHOTS = {
   // The link preview image (og:image), at the 1200x630 that link cards use.
   // `host` names the server: the browser resolves it to the fixture, which
   // serves it over TLS with a throwaway certificate.
-  og: { scene: "pioneers", file: "og.png", width: 1200, height: 630, colorScheme: "dark", host: "engine.example.com" },
+  og: { scene: "piper", file: "og.png", width: 1200, height: 630, colorScheme: "dark", host: "apron.chat" },
 };
 
 const here = fileURLToPath(new URL(".", import.meta.url));
