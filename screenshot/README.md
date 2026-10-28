@@ -20,8 +20,10 @@ scripted server, so they show lived-in chats without anyone's real messages.
 | `og` | `og.png` | the `pioneers` scene, dark, at 1200x630: the link preview image (`og:image`) |
 
 `og.png` is also apron-web's `static/og.png`: copy it there when it changes.
-Its shot shows the server as `engine.example.com` by routing that connection
-to the fixture, so its scene can't use `/files/` or `/streams/`.
+
+A shot with a `host` shows the server under that name instead of
+`chat.localhost:8765`: the browser resolves the host to the fixture, which
+serves it over TLS with a throwaway certificate (made with `openssl`).
 
 Each scene in `scenes/<name>.js` defines its users, rooms (a `private` room
 without a title is a DM), a script of messages (with optional replies,
@@ -35,7 +37,7 @@ pixel-art apron in shazow/apron's `art/`, and a `wss://` badge.
 
 ## Run
 
-Requires [Bun](https://bun.sh) and Node.js.
+Requires [Bun](https://bun.sh), Node.js and, for shots with a `host`, `openssl`.
 
 ```sh
 npm install
