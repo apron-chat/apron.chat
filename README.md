@@ -2,19 +2,29 @@
 
 apron.chat website: a static landing page for the [Apron Chat Protocol](https://github.com/shazow/apron).
 
-- `public/` is the site. `site.css` is hand-edited. The landing page is
-  hand-edited in `templates/index.html`, and `npm run build` writes it to
-  `public/index.html` with the protocol version from PROTOCOL.md filled in for
-  `{{version}}` and the questions from shazow/apron's FAQ.md for `{{faq}}`, each
-  linked to its answer.
+- `public/` is the site. `site.css` is hand-edited, and so is `404.html`, served
+  for any path with no file, which points to the spec and its Markdown. The
+  landing page is hand-edited in `templates/index.html`, and `npm run build`
+  writes it to `public/index.html` with the protocol version from PROTOCOL.md
+  filled in for `{{version}}` and the questions from shazow/apron's FAQ.md for
+  `{{faq}}`, each linked to its answer.
 - `/protocol` is [PROTOCOL.md](https://github.com/shazow/apron/blob/main/PROTOCOL.md)
   from shazow/apron, rendered into `public/protocol.html` by `npm run build`
   with `templates/protocol.html` as its page, and its code blocks colored by
   [highlight.js](https://highlightjs.org/). The raw Markdown is served at
-  `/protocol.md`. These are generated, not committed.
-- `public/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
-  hand-edited. `npm run build` also writes `public/llms-full.txt`: the index,
-  then PROTOCOL.md and HISTORY.md in full.
+  `/protocol.md` as `text/plain` (set in `public/_headers`), since some agents
+  won't open `text/markdown`, with a comment such as `<!-- #a4-links -->` above
+  each heading so a `/protocol#a4-links` link can be found in it. It is also
+  served in four parts, one for each tier the page sorts sections into
+  (below), for agents that can't read it at once: `/protocol-core.md`,
+  `/protocol-capabilities.md`, `/protocol-informative.md` and
+  `/protocol-draft.md`. A note atop each lists the parts and which part holds
+  each section it links to. These are generated, not committed.
+- `/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
+  hand-edited in `templates/llms.txt`. `npm run build` writes it to
+  `public/llms.txt` with each part's section ids filled in for
+  `{{ids_required}}` and the like. It also writes `public/llms-full.txt`: the
+  index, then PROTOCOL.md and HISTORY.md in full.
 - `src/worker.js` serves Markdown to agents that ask for it: `/` and
   `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
   and the spec's Markdown. Every other path is a static file.

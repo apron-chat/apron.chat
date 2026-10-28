@@ -1,8 +1,10 @@
 // Renders PROTOCOL.md from shazow/apron into public/protocol.html, served at
-// /protocol, and copies the Markdown to public/protocol.md. Also writes
-// public/index.html from templates/index.html with the spec's version and
-// FAQ.md's questions, and public/llms-full.txt: public/llms.txt followed by
-// PROTOCOL.md and HISTORY.md.
+// /protocol, and copies the Markdown to public/protocol.md with each section's
+// id in a comment above its heading, and to public/protocol-*.md cut into its
+// tiers. Also writes public/index.html from templates/index.html with the
+// spec's version and FAQ.md's questions, public/llms.txt from
+// templates/llms.txt with the section ids in each part, and
+// public/llms-full.txt: llms.txt followed by PROTOCOL.md and HISTORY.md.
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
@@ -69,12 +71,27 @@ async function source() {
 
 // How much of the spec an implementation reads. Each tier runs from the section
 // that starts it to the next tier's, and the first starts at the first section.
+// Each is also served as Markdown on its own, as file.
 const tiers = [
-  { key: "required", name: "Required" },
-  { key: "optional", name: "Optional", starts: /^\d+\. Capabilities$/ },
-  { key: "informative", name: "Informative", starts: /^\d+\. Security considerations$/ },
-  { key: "draft", name: "Draft", starts: /^Appendix [A-Z] — Under consideration$/ },
+  { key: "required", name: "Required", file: "protocol-core.md" },
+  { key: "optional", name: "Optional", file: "protocol-capabilities.md", starts: /^\d+\. Capabilities$/ },
+  { key: "informative", name: "Informative", file: "protocol-informative.md", starts: /^\d+\. Security considerations$/ },
+  { key: "draft", name: "Draft", file: "protocol-draft.md", starts: /^Appendix [A-Z] — Under consideration$/ },
 ];
+
+// The ids in a part of the spec from sectioned(), such as ["4-capabilities", "41-command"].
+const anchors = text => [...text.matchAll(/^<!-- #(\S+) -->$/gm)].map(([, id]) => id);
+
+// Sets the tier of each top-level section, by its heading.
+function tier(sections) {
+  let start = 0;
+  for (const [i, tier] of tiers.entries()) {
+    const at = i && sections.findIndex(s => tier.starts.test(s.heading.raw));
+    if (i && at <= start) throw new Error(`No "${tier.name}" tier: no section matching ${tier.starts}, or it comes before the "${tiers[i - 1].name}" tier`);
+    start = at;
+    for (const s of sections.slice(at)) s.tier = tier;
+  }
+}
 
 const words = html => html.replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
 const count = n => n.toLocaleString("en-US");
@@ -127,6 +144,62 @@ function frontMatter(markdown) {
   return { meta, body: markdown.slice(match[0].length) };
 }
 
+// The Markdown cut into the title and introduction, then each top-level
+// section with its tier. Each heading's id from the page goes in a comment
+// above it, such as <!-- #a4-links -->, so an agent reading the Markdown can
+// find the section a /protocol#a4-links link names.
+function sectioned(markdown) {
+  new Marked(gfmHeadingId()).parse(markdown);
+  const ids = getHeadingList().map(heading => heading.id);
+  const tokens = new Marked().lexer(markdown);
+  if (tokens.map(token => token.raw).join("") !== markdown) throw new Error("PROTOCOL.md's tokens don't add up to the file");
+  const headings = tokens.filter(token => token.type === "heading");
+  // A heading inside a list or quote would put every id after it on the wrong section.
+  if (headings.length !== ids.length) throw new Error(`Found ${ids.length} headings in PROTOCOL.md but ${headings.length} at the top level`);
+  const parts = [{ text: "" }];
+  for (const token of tokens) {
+    let comment = "";
+    if (token.type === "heading") {
+      const id = ids.shift();
+      if (token.depth === 2) parts.push({ heading: { raw: token.text, id }, text: "" });
+      comment = `<!-- #${id} -->\n`;
+    }
+    parts.at(-1).text += comment + token.raw;
+  }
+  const [intro, ...sections] = parts;
+  tier(sections);
+  return { intro: intro.text, sections };
+}
+
+// Each tier as a Markdown file of its own, for agents that can't read the
+// whole spec at once: the front matter, a note naming every part and where to
+// find the sections this one links to in the others, then the tier's
+// sections. The title and introduction go in the first.
+function parts(front, intro, sections, version) {
+  const base = "https://apron.chat/";
+  const runs = tiers.map(tier => ({ tier, sections: sections.filter(s => s.tier === tier) }));
+  for (const [i, run] of runs.entries()) {
+    run.text = ((i ? "" : intro) + run.sections.map(s => s.text).join("")).trim().replace(/\n---$/, "").trimEnd() + "\n";
+    run.about = `${run.tier.name}: ${numbers(run.sections)} (${Math.round(Buffer.byteLength(run.text) / 1000)} KB)`;
+  }
+  const where = new Map(runs.flatMap(run => anchors(run.text).map(id => [id, run.tier.file])));
+  return Object.fromEntries(runs.map((run, i) => {
+    // The ids this part links to, by the part they're in, in the spec's order.
+    const links = new Set([...run.text.matchAll(/\]\(#([^)\s]+)\)/g)].map(([, id]) => id));
+    const away = runs.filter(r => r !== run).map(r => ({ file: r.tier.file,
+      ids: [...where].filter(([id, file]) => file === r.tier.file && links.has(id)).map(([id]) => `#${id}`) }))
+      .filter(r => r.ids.length);
+    const note = [
+      `> Apron Chat Protocol v${version}, part ${i + 1} of ${runs.length}. The whole specification is at`,
+      `> ${base}protocol.md, and in parts at:`,
+      ">",
+      ...runs.map(r => `> - ${base}${r.tier.file}: ${r.about}`),
+      ...away.length ? [">", "> Sections this part links to in the other parts:", ">", ...away.map(r => `> - ${base}${r.file}: ${r.ids.join(", ")}`)] : [],
+    ].join("\n");
+    return [`public/${run.tier.file}`, `${front}\n${note}\n\n${run.text}`];
+  }));
+}
+
 function render(markdown, history, historyUrl) {
   let html = new Marked(gfmHeadingId(), highlight).parse(markdown);
   const headings = getHeadingList().filter(heading => heading.level >= 2 && heading.level <= 4);
@@ -150,13 +223,7 @@ function render(markdown, history, historyUrl) {
     if (heading.level === 2) sections.push({ heading, children: [] });
     else sections.at(-1)?.children.push(heading);
   }
-  let start = 0;
-  for (const [i, tier] of tiers.entries()) {
-    const at = i && sections.findIndex(s => tier.starts.test(s.heading.raw));
-    if (i && at <= start) throw new Error(`No "${tier.name}" tier: no section matching ${tier.starts}, or it comes before the "${tiers[i - 1].name}" tier`);
-    start = at;
-    for (const s of sections.slice(at)) s.tier = tier;
-  }
+  tier(sections);
 
   // The contents go after the title, and an older spec's version table under
   // it, before the introduction. Under the title, a link to HISTORY.md names
@@ -238,24 +305,35 @@ function questions(faq, faqUrl) {
 const { markdown, history, faq, label, url, historyUrl, faqUrl } = await source();
 const { meta, body } = frontMatter(markdown);
 const { head, html, map, toc } = render(body, history, historyUrl);
+// The spec with its section ids, after the front matter, for agents.
+const front = markdown.slice(0, markdown.length - body.length);
+const { intro, sections } = sectioned(body);
+const spec = front + intro + sections.map(s => s.text).join("");
 // The version, from the front matter (or an older spec's version table). Fail
 // rather than publish a page without it.
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!/^\d+$/.test(version ?? "")) throw new Error(`No "version: N" in PROTOCOL.md's front matter at ${label}`);
 const values = { head, content: html, map, toc, version, faq: questions(faq, faqUrl), faq_url: faqUrl, source: label, source_url: url };
+// Each part's section ids for llms.txt, such as {{ids_optional}}: "#4-capabilities #41-command …".
+for (const [i, tier] of tiers.entries()) {
+  values[`ids_${tier.key}`] = anchors((i ? "" : intro) + sections.filter(s => s.tier === tier).map(s => s.text).join(""))
+    .map(id => `#${id}`).join(" ");
+}
 // A placeholder with no value is a typo in the template, or a value the build failed to make.
 const fill = template => readFileSync(at(`templates/${template}`), "utf8").replace(/\{\{(\w+)\}\}/g, (_, key) => {
   if (!values[key]) throw new Error(`templates/${template}: no value for {{${key}}}`);
   return values[key];
 });
 // llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
-const index = readFileSync(at("public/llms.txt"), "utf8").trimEnd();
+const index = fill("llms.txt").trimEnd();
 const note = `Rendered from ${url}`;
 const files = {
   "public/protocol.html": fill("protocol.html"),
   "public/index.html": fill("index.html"),
-  "public/protocol.md": markdown,
-  "public/llms-full.txt": [index, `<!-- ${note} -->`, markdown.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
+  "public/llms.txt": index + "\n",
+  "public/protocol.md": spec,
+  "public/llms-full.txt": [index, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
+  ...parts(front, intro, sections, version),
 };
 for (const [path, text] of Object.entries(files)) writeFileSync(at(path), text);
 console.log(`Rendered PROTOCOL.md v${version} from ${repo}@${label} into public/protocol.html`);
