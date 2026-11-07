@@ -48,6 +48,7 @@ function bridge(page, url) {
   scene.onclose = () => page.close();
   page.onMessage(frame => scene.readyState === WebSocket.OPEN ? scene.send(frame) : waiting.push(frame));
   page.onClose(() => scene.close());
+  return scene;
 }
 
 async function capture(browser, shot) {
@@ -57,7 +58,8 @@ async function capture(browser, shot) {
   const chat = host ? `wss://${host}/` : scene;
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2, colorScheme, timezoneId });
   await page.clock.install({ time: (await sceneEnd(name)) + 2 * 60_000 });
-  if (host) await page.routeWebSocket(chat, ws => bridge(ws, scene));
+  const bridged = [];
+  if (host) await page.routeWebSocket(chat, ws => bridged.push(bridge(ws, scene)));
   // The client only offers a linked server it hasn't used before, so seed it
   // as a recent server, which a link then switches to at once.
   await page.addInitScript(chat => {
@@ -81,6 +83,7 @@ async function capture(browser, shot) {
   await page.screenshot({ path: output });
   console.log(`Saved ${output}`);
   await page.close();
+  for (const socket of bridged) socket.close();
 }
 
 const proxy = process.env.HTTPS_PROXY;
