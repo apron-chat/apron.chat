@@ -1,43 +1,32 @@
 # Live Demo screenshots
 
-The screenshots on the landing page are a real Apron web client talking to a
-scripted server, so they show lived-in chats without anyone's real messages.
+The screenshots on the landing page are a real Apron web client showing
+scenes from [scene.apron.chat](https://scene.apron.chat), so they show
+lived-in chats without anyone's real messages. Each scene is a read-only Apron
+server replaying an archive; its messages, avatars, images and live text all
+live in the [scene.apron.chat](https://github.com/apron-chat/scene.apron.chat)
+repository, and are changed there.
 
-- `fixture-server.js` is an Apron Chat v9 server for Bun with no
-  dependencies. It serves one scene from `scenes/`. Timestamps are relative to
-  when it starts. It also serves a scene's live streams at `/streams/<name>`
-  (they never end, so clients show them as live), its files at
-  `/files/<name>`, and typing.
-- `capture.mjs` takes each shot in turn: it starts the fixture with the shot's
-  scene, opens the web client against it with Playwright, waits for the scene
-  to load, and saves `public/images/<file>` at 2x.
+`capture.mjs` takes each shot in turn: it opens the web client on the shot's
+scene with Playwright, waits for it to load, and saves `public/images/<file>`
+at 2x. The page's clock is set to just after the scene's last event, so its
+messages read as recent.
 
-| shot | file | shows |
-|---|---|---|
-| `team` | `demo.png` | rooms, a thread, bot and admin badges, replies, a code block, reactions, presence |
-| `agent` | `demo-agent.png` | a coding agent in a thread, with a finished and a live terminal stream (`embed:stream`) |
-| `rich` | `demo-rich.png` | an uploaded image, a mention, a link preview, reactions, typing |
-| `og` | `og.png` | the `piper` scene, dark, at 1200x630: the link preview image (`og:image`), with a mention, a terminal stream, replies, a bot, a thread and DMs |
+| shot | scene | file | shows |
+|---|---|---|---|
+| `team` | [piper](https://scene.apron.chat/piper) | `demo.png` | the first shot, Team chat: rooms, threads and DMs, avatars, bot and admin badges, a reply, a mention, a terminal, reactions, typing, presence |
+| `agent` | [agent](https://scene.apron.chat/agent) | `demo-agent.png` | a coding agent in a thread, with a finished and a live terminal |
+| `rich` | [rich](https://scene.apron.chat/rich) | `demo-rich.png` | an uploaded image, a mention, a link preview, reactions, typing |
+| `og` | [piper](https://scene.apron.chat/piper) | `og.png` | dark, at 1200x630: the link preview image (`og:image`), with avatars, a mention, a terminal, replies, a bot, threads and DMs |
 
 `og.png` is also apron-web's `static/og.png`: copy it there when it changes.
 
 A shot with a `host` shows the server under that name instead of
-`chat.localhost:8765`: the browser resolves the host to the fixture, which
-serves it over TLS with a throwaway certificate (made with `openssl`).
-
-Each scene in `scenes/<name>.js` defines its users, rooms (a `private` room
-without a title is a DM), a script of messages (with optional replies,
-mentions and embeds), reactions, and optionally `streams`, `files` and
-`typing`, plus the room to open and the text to wait for. Paths in messages that start with `/streams/` or `/files/`
-are sent as URLs on the server's own origin, which the client requires for
-streams and images.
-
-`assets/apron-stickers.png` is a sticker sheet made from the Apron logo, the
-pixel-art apron in shazow/apron's `art/`, and a `wss://` badge.
+`scene.apron.chat`: the page's connection to that host is handed to the scene.
 
 ## Run
 
-Requires [Bun](https://bun.sh), Node.js and, for shots with a `host`, `openssl`.
+Requires Node.js 22 or later.
 
 ```sh
 npm install
@@ -45,12 +34,10 @@ npm run screenshot            # every shot
 npm run screenshot -- agent   # one shot
 ```
 
-To look at a scene yourself, run `npm run fixture -- --scene agent` and open
-<https://web.apron.chat/?server=ws%3A%2F%2Fchat.localhost%3A8765%2F> (the
-client asks before it connects to a new server).
-
 Options, as environment variables:
 
 - `CLIENT_URL`: the client to capture (default `https://web.apron.chat/`),
   such as a local apron-web dev server.
-- `PORT`: the fixture's port (default `8765`).
+- `SCENES_URL`: the scene server (default `https://scene.apron.chat`), such
+  as a local one from scene.apron.chat's `npm run dev`
+  (`http://localhost:8787`), to capture a scene before it's deployed.

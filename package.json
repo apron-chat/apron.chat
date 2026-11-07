@@ -4,8 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build-protocol.mjs",
-    "screenshot": "node screenshot/capture.mjs",
-    "fixture": "bun screenshot/fixture-server.js"
+    "screenshot": "node screenshot/capture.mjs"
   },
   "devDependencies": {
     "playwright": "1.56.1",
