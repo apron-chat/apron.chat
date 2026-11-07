@@ -13,7 +13,9 @@ import { chromium } from "playwright";
 // thread) it opens, text to wait for, the file it's saved to, and how it's
 // taken.
 const SHOTS = {
-  team: { file: "demo.png", room: "general", waitFor: "Writing up the changelog now" },
+  // Team chat, the shot shown first: Pied Piper's Engineering room. Its
+  // times are Pacific, as the scene's are.
+  team: { scene: "piper", file: "demo.png", room: "eng", waitFor: "actually doing this", timezoneId: "America/Los_Angeles" },
   agent: { file: "demo-agent.png", room: "general", thread: "fix-reconnect", waitFor: "12/19" },
   rich: { file: "demo-rich.png", room: "design", waitFor: "is typing" },
   // The link preview image (og:image), at the 1200x630 that link cards use,

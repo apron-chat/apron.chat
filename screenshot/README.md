@@ -14,7 +14,7 @@ messages read as recent.
 
 | shot | scene | file | shows |
 |---|---|---|---|
-| `team` | [team](https://scene.apron.chat/team) | `demo.png` | rooms, a thread, bot and admin badges, replies, a code block, reactions, presence |
+| `team` | [piper](https://scene.apron.chat/piper) | `demo.png` | the first shot, Team chat: rooms, threads and DMs, avatars, bot and admin badges, a reply, a mention, a terminal, reactions, typing, presence |
 | `agent` | [agent](https://scene.apron.chat/agent) | `demo-agent.png` | a coding agent in a thread, with a finished and a live terminal |
 | `rich` | [rich](https://scene.apron.chat/rich) | `demo-rich.png` | an uploaded image, a mention, a link preview, reactions, typing |
 | `og` | [piper](https://scene.apron.chat/piper) | `og.png` | dark, at 1200x630: the link preview image (`og:image`), with avatars, a mention, a terminal, replies, a bot, threads and DMs |
