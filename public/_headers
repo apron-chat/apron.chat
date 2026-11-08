@@ -1,3 +1,9 @@
+# Every response names llms.txt as the index that describes it (llms.txt v2:
+# rel="describedby"), for agents that read headers, and for the Markdown
+# files, which have no <head> to put a <link> in.
+/*
+  Link: </llms.txt>; rel="describedby"; type="text/markdown"
+
 # Serve the spec's Markdown, whole and in parts, as plain text: some agents
 # won't read a text/markdown response. src/worker.js still answers /protocol
 # with text/markdown when the request's Accept header asks for it.
@@ -6,3 +12,7 @@
 
 /protocol-*.md
   Content-Type: text/plain; charset=utf-8
+
+# llms.txt itself needs no pointer to itself.
+/llms.txt
+  ! Link

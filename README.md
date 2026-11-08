@@ -24,7 +24,16 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   hand-edited in `templates/llms.txt`. `npm run build` writes it to
   `public/llms.txt` with each part's section ids filled in for
   `{{ids_required}}` and the like. It also writes `public/llms-full.txt`: the
-  index, then PROTOCOL.md and HISTORY.md in full.
+  index, then PROTOCOL.md and HISTORY.md in full. Agents that land on the
+  spec find it from the top, not only the footer, since a fetch of the long
+  page or its Markdown is often cut short: a line atop `/protocol` and atop
+  `/protocol.md` and each part points to it, for the servers, clients, schema
+  and fixtures that the spec doesn't list. On the pages, that line (and one
+  on the landing page) is out of sight, with the `for-agents` class, but
+  stays in the text that fetch tools read. Every response but llms.txt's own also
+  names it with `Link: </llms.txt>; rel="describedby"` (set in
+  `public/_headers`), as llms.txt v2 asks, and the pages do the same with a
+  `<link rel="describedby">`.
 - `src/worker.js` serves Markdown to agents that ask for it: `/` and
   `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
   and the spec's Markdown. Every other path is a static file.
