@@ -175,6 +175,10 @@ function sectioned(markdown) {
 // whole spec at once: the front matter, a note naming every part and where to
 // find the sections this one links to in the others, then the tier's
 // sections. The title and introduction go in the first.
+// The line atop the spec's Markdown and each part that leads agents to
+// llms.txt, for the servers, clients, schema and fixtures the spec doesn't list.
+const more = "Servers, clients, the JSON Schema and wire fixtures to test against are listed at https://apron.chat/llms.txt.";
+
 function parts(front, intro, sections, version) {
   const base = "https://apron.chat/";
   const runs = tiers.map(tier => ({ tier, sections: sections.filter(s => s.tier === tier) }));
@@ -194,6 +198,8 @@ function parts(front, intro, sections, version) {
       `> ${base}protocol.md, and in parts at:`,
       ">",
       ...runs.map(r => `> - ${base}${r.tier.file}: ${r.about}`),
+      ">",
+      `> ${more}`,
       ...away.length ? [">", "> Sections this part links to in the other parts:", ">", ...away.map(r => `> - ${base}${r.file}: ${r.ids.join(", ")}`)] : [],
     ].join("\n");
     return [`public/${run.tier.file}`, `${front}\n${note}\n\n${run.text}`];
@@ -308,7 +314,17 @@ const { head, html, map, toc } = render(body, history, historyUrl);
 // The spec with its section ids, after the front matter, for agents.
 const front = markdown.slice(0, markdown.length - body.length);
 const { intro, sections } = sectioned(body);
-const spec = front + intro + sections.map(s => s.text).join("");
+const rest = intro + sections.map(s => s.text).join("");
+const spec = front + rest;
+// protocol.md leads with a note on where to find the rest, as each part does.
+// llms-full.txt goes without it, since it starts with llms.txt.
+const specNote = [
+  `> ${more}`,
+  ">",
+  "> The specification is also in parts, for agents that can't read it at once:",
+  ">",
+  ...tiers.map(tier => `> - https://apron.chat/${tier.file}: ${tier.name}`),
+].join("\n");
 // The version, from the front matter (or an older spec's version table). Fail
 // rather than publish a page without it.
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
@@ -325,14 +341,14 @@ const fill = template => readFileSync(at(`templates/${template}`), "utf8").repla
   return values[key];
 });
 // llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
-const index = fill("llms.txt").trimEnd();
+const llms = fill("llms.txt").trimEnd();
 const note = `Rendered from ${url}`;
 const files = {
   "public/protocol.html": fill("protocol.html"),
   "public/index.html": fill("index.html"),
-  "public/llms.txt": index + "\n",
-  "public/protocol.md": spec,
-  "public/llms-full.txt": [index, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
+  "public/llms.txt": llms + "\n",
+  "public/protocol.md": `${front}\n${specNote}\n\n${rest.trimStart()}`,
+  "public/llms-full.txt": [llms, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
   ...parts(front, intro, sections, version),
 };
 for (const [path, text] of Object.entries(files)) writeFileSync(at(path), text);
