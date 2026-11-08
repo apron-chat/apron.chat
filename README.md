@@ -30,7 +30,10 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   `/protocol.md` and each part points to it, for the servers, clients, schema
   and fixtures that the spec doesn't list. On the pages, that line (and one
   on the landing page) is out of sight, with the `for-agents` class, but
-  stays in the text that fetch tools read.
+  stays in the text that fetch tools read. Every response but llms.txt's own also
+  names it with `Link: </llms.txt>; rel="describedby"` (set in
+  `public/_headers`), as llms.txt v2 asks, and the pages do the same with a
+  `<link rel="describedby">`.
 - `src/worker.js` serves Markdown to agents that ask for it: `/` and
   `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
   and the spec's Markdown. Every other path is a static file.
