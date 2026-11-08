@@ -28,7 +28,9 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   spec find it from the top, not only the footer, since a fetch of the long
   page or its Markdown is often cut short: a line atop `/protocol` and atop
   `/protocol.md` and each part points to it, for the servers, clients, schema
-  and fixtures that the spec doesn't list.
+  and fixtures that the spec doesn't list. On the pages, that line (and one
+  on the landing page) is out of sight, with the `for-agents` class, but
+  stays in the text that fetch tools read.
 - `src/worker.js` serves Markdown to agents that ask for it: `/` and
   `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
   and the spec's Markdown. Every other path is a static file.
