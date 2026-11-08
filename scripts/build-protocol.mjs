@@ -171,14 +171,14 @@ function sectioned(markdown) {
   return { intro: intro.text, sections };
 }
 
-// Each tier as a Markdown file of its own, for agents that can't read the
-// whole spec at once: the front matter, a note naming every part and where to
-// find the sections this one links to in the others, then the tier's
-// sections. The title and introduction go in the first.
 // The line atop the spec's Markdown and each part that leads agents to
 // llms.txt, for the servers, clients, schema and fixtures the spec doesn't list.
 const more = "Servers, clients, the JSON Schema and wire fixtures to test against are listed at https://apron.chat/llms.txt.";
 
+// Each tier as a Markdown file of its own, for agents that can't read the
+// whole spec at once: the front matter, a note naming every part and where to
+// find the sections this one links to in the others, then the tier's
+// sections. The title and introduction go in the first.
 function parts(front, intro, sections, version) {
   const base = "https://apron.chat/";
   const runs = tiers.map(tier => ({ tier, sections: sections.filter(s => s.tier === tier) }));
