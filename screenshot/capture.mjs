@@ -12,12 +12,22 @@ import { chromium } from "playwright";
 // Each shot is a scene (the shot's own name unless it says), the room (and
 // thread) it opens, text to wait for, the file it's saved to, and how it's
 // taken. A shot of a moment in the room's past names a message to open it at
-// (`message`) and the text to scroll to the top of the frame (`top`).
+// (`message`) and the text to scroll to the top of the frame (`top`). A shot
+// whose live text grows the room as it plays waits for it (`settle`, in
+// milliseconds), then goes back to the latest.
 const SHOTS = {
   // Team chat, the shot shown first: Pied Piper's Engineering room. Its
   // times are Pacific, as the scene's are.
   team: { scene: "piper", file: "demo.png", room: "eng", waitFor: "actually doing this", timezoneId: "America/Los_Angeles" },
-  agent: { file: "demo-agent.png", room: "general", thread: "fix-reconnect", waitFor: "12/19" },
+  // Support desk: Reynholm Industries' Support Desk, where Moss's twelve
+  // agents answer every ticket the same way, and Roy notices. The swarm's
+  // live status takes about 24 seconds to play out, and grows the room as it
+  // does; its agents are typing for 30. Its times are London's, as the
+  // scene's are.
+  support: {
+    scene: "itcrowd", file: "demo-support.png", room: "desk", waitFor: "Fair.",
+    settle: 25_000, timezoneId: "Europe/London",
+  },
   // Family chat: the McCallisters' family room the morning they leave Kevin
   // behind, from his "Mom? Dad?" to his "Can't talk. Busy." Its times are
   // Central, as the scene's are.
@@ -61,7 +71,7 @@ function bridge(page, url) {
 }
 
 async function capture(browser, shot) {
-  const { scene: name, file, room, thread, message, top, waitFor, width = 1280, height = 760, colorScheme = "light", host, timezoneId = "UTC" } = shot;
+  const { scene: name, file, room, thread, message, top, waitFor, settle, width = 1280, height = 760, colorScheme = "light", host, timezoneId = "UTC" } = shot;
   const output = new URL(`../public/images/${file}`, import.meta.url).pathname;
   const scene = `${scenesUrl.replace(/^http/, "ws")}/${name}`;
   const chat = host ? `wss://${host}/` : scene;
@@ -103,6 +113,11 @@ async function capture(browser, shot) {
   } else if (await jump.isVisible()) {
     // A thread opens at its first message; show the latest instead.
     await jump.click();
+  }
+  if (settle) {
+    // Live text that grows the room moves the latest out of view: let it play, then go back.
+    await page.waitForTimeout(settle);
+    if (await jump.isVisible()) await jump.click();
   }
   // Keep the pointer off the messages, so no hover toolbar shows.
   await page.mouse.move(1, 1);

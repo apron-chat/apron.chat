@@ -15,7 +15,7 @@ messages read as recent.
 | shot | scene | file | shows |
 |---|---|---|---|
 | `team` | [piper](https://scene.apron.chat/piper) | `demo.png` | the first shot, Team chat: rooms, threads and DMs, avatars, bot and admin badges, a reply, a mention, a terminal, reactions, typing, presence |
-| `agent` | [agent](https://scene.apron.chat/agent) | `demo-agent.png` | a coding agent in a thread, with a finished and a live terminal |
+| `support` | [itcrowd](https://scene.apron.chat/itcrowd) | `demo-support.png` | Reynholm Industries' Support Desk: a thread per ticket, each answered by one of twelve bots, Roy and Moss on what they all say, several bots typing. The swarm's live status grows the room as it plays, so it waits for it (`settle`) and goes back to the latest |
 | `family` | [homealone](https://scene.apron.chat/homealone) | `demo-family.png` | the McCallisters' family room the morning they leave Kevin behind: a private room, threads, replies, reactions, avatars, typing. It opens the room at a message and scrolls Kevin's "Mom? Dad?" to the top |
 | `og` | [piper](https://scene.apron.chat/piper) | `og.png` | dark, at 1200x630: the link preview image (`og:image`), with avatars, a mention, a terminal, replies, a bot, threads and DMs |
 
@@ -31,7 +31,7 @@ Requires Node.js 22 or later.
 ```sh
 npm install
 npm run screenshot            # every shot
-npm run screenshot -- agent   # one shot
+npm run screenshot -- support # one shot
 ```
 
 Options, as environment variables:
