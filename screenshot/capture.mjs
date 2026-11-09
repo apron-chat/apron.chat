@@ -11,13 +11,20 @@ import { chromium } from "playwright";
 
 // Each shot is a scene (the shot's own name unless it says), the room (and
 // thread) it opens, text to wait for, the file it's saved to, and how it's
-// taken.
+// taken. A shot of a moment in the room's past names a message to open it at
+// (`message`) and the text to scroll to the top of the frame (`top`).
 const SHOTS = {
   // Team chat, the shot shown first: Pied Piper's Engineering room. Its
   // times are Pacific, as the scene's are.
   team: { scene: "piper", file: "demo.png", room: "eng", waitFor: "actually doing this", timezoneId: "America/Los_Angeles" },
   agent: { file: "demo-agent.png", room: "general", thread: "fix-reconnect", waitFor: "12/19" },
-  rich: { file: "demo-rich.png", room: "design", waitFor: "is typing" },
+  // Family chat: the McCallisters' family room the morning they leave Kevin
+  // behind, from his "Mom? Dad?" to his "Can't talk. Busy." Its times are
+  // Central, as the scene's are.
+  family: {
+    scene: "homealone", file: "demo-family.png", room: "family", message: "1766245810000",
+    top: "Mom? Dad?", waitFor: "Can't talk. Busy.", timezoneId: "America/Chicago",
+  },
   // The link preview image (og:image), at the 1200x630 that link cards use,
   // with the server shown as apron.chat (`host`): the page's connection to
   // it is handed to the scene. Its times are Pacific, as the scene's are.
@@ -54,7 +61,7 @@ function bridge(page, url) {
 }
 
 async function capture(browser, shot) {
-  const { scene: name, file, room, thread, waitFor, width = 1280, height = 760, colorScheme = "light", host, timezoneId = "UTC" } = shot;
+  const { scene: name, file, room, thread, message, top, waitFor, width = 1280, height = 760, colorScheme = "light", host, timezoneId = "UTC" } = shot;
   const output = new URL(`../public/images/${file}`, import.meta.url).pathname;
   const scene = `${scenesUrl.replace(/^http/, "ws")}/${name}`;
   const chat = host ? `wss://${host}/` : scene;
@@ -72,13 +79,31 @@ async function capture(browser, shot) {
   }, chat);
   const url = new URL(clientUrl);
   // The client reads where to go from the fragment.
-  url.hash = new URLSearchParams({ server: chat, room, ...(thread ? { thread } : {}) }).toString();
+  url.hash = new URLSearchParams({ server: chat, room, ...(thread ? { thread } : {}), ...(message ? { message } : {}) }).toString();
   // Live text never finishes loading, so don't wait for the network to go quiet.
   await page.goto(url.toString(), { waitUntil: "load" });
   await page.getByText(waitFor).filter({ visible: true }).first().waitFor({ timeout: 20_000 });
-  // A thread opens at its first message; show the latest instead.
   const jump = page.locator('button[title="Jump to latest"]');
-  if (await jump.isVisible()) await jump.click();
+  if (message) {
+    // Opened at a message: let go of the jump's highlight, scroll `top` to just
+    // under the room's header, and leave out the button back to the latest.
+    await page.waitForTimeout(300);
+    await page.keyboard.press("Escape");
+    const line = page.getByText(top, { exact: true }).first();
+    const header = await page.locator("main header").first().boundingBox();
+    for (let tries = 0; tries < 3; tries++) {
+      const box = await line.boundingBox();
+      const by = box.y - (header.y + header.height + 69);
+      if (Math.abs(by) < 2) break;
+      await page.mouse.move(header.x + header.width / 2, header.y + header.height + 200);
+      await page.mouse.wheel(0, by);
+      await page.waitForTimeout(300);
+    }
+    await page.addStyleTag({ content: 'button[title="Jump to latest"] { display: none !important; }' });
+  } else if (await jump.isVisible()) {
+    // A thread opens at its first message; show the latest instead.
+    await jump.click();
+  }
   // Keep the pointer off the messages, so no hover toolbar shows.
   await page.mouse.move(1, 1);
   await page.waitForTimeout(1500);
