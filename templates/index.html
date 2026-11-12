@@ -40,7 +40,7 @@
 
 <section class="part" id="protocol">
 <h2><span>1.</span>The Protocol</h2>
-<p>JSON over any transport, like WebSocket. Small core specification and optional incremental capabilities with graceful fallbacks.</p>
+<p>JSON over any transport, like WebSocket. Tiny core and optional incremental capabilities with graceful fallbacks. Build only what you need.</p>
 <pre class="code">
 <span class="server">{"method": <b>"server"</b>, "params": {"apron": {{version}}, "auth": [<strong>"guest"</strong>]}}</span>
 <span class="client">{"method": <b>"auth"</b>, "id": <mark>"c1"</mark>, "params": {"scheme": <strong>"guest"</strong>, "name": <strong>"Ada"</strong>}}</span>
@@ -60,7 +60,7 @@
 
 <section class="part" id="demo">
 <h2><span>2.</span>Live Demo</h2>
-<p>Chat on the public demo server with restricted functionality, or point the web frontend at your own server.</p>
+<p>Come say "hi" on our public demo server, or point the Apron Web client at your own server.</p>
 <div class="demo">
 <div class="gallery">
 <figure class="shot" id="shot-team">
@@ -90,7 +90,7 @@
 
 <section class="part" id="servers">
 <h2><span>3.</span>Servers</h2>
-<p>Run one, read one, or write your own.</p>
+<p>Reference implementations to run or modify for your use cases.</p>
 <div class="cards">
 <a class="card" href="https://github.com/apron-chat/apron-server-go"><span class="tag">Go</span><span class="name">apron-server-go</span><span class="desc">Reference server for self-hosting. Every capability.</span></a>
 <a class="card" href="https://github.com/apron-chat/apron-server-cloudflare"><span class="tag">TypeScript · Worker</span><span class="name">apron-server-cloudflare</span><span class="desc">Runs the public demo on the Cloudflare free tier.</span></a>
@@ -101,7 +101,7 @@
 
 <section class="part" id="clients">
 <h2><span>4.</span>Clients</h2>
-<p>Any client works with any server.</p>
+<p>Join any server with your favourite client, or build your own.</p>
 <div class="cards">
 <a class="card" href="https://github.com/apron-chat/apron-web"><span class="tag">SvelteKit</span><span class="name">apron-web</span><span class="desc">The web client behind the live demo.</span></a>
 <a class="card" href="https://github.com/vrypan/SideTable"><span class="tag">macOS</span><span class="name">SideTable</span><span class="desc">A macOS client for apron.chat.</span></a>
