@@ -145,8 +145,10 @@ export function renderExtensions({ index, files, titles, highlight, blob }) {
   const body = tokens.slice(tokens.indexOf(title) + 1, at).filter(token => token.type !== "space");
   const lead = body.at(-1)?.type === "paragraph" ? body.pop() : null;
   // The introduction, without the list of rules that every extension follows:
-  // those are for the extensions' authors, and stay in the Markdown.
-  const intro = polish(new Marked(highlight).parser(body.filter(token => token.type !== "list")));
+  // those are for the extensions' authors, who read them in the repository.
+  // This page is for people who implement the extensions.
+  const forAuthors = token => token.type === "list" && tokens.indexOf(token) < at;
+  const intro = polish(new Marked(highlight).parser(body.filter(token => !forAuthors(token))));
   const caption = lead ? new Marked().parseInline(lead.text) : "";
 
   const total = extensions.reduce((n, ext) => n + ext.length, 0);
@@ -158,9 +160,11 @@ ${caption ? `<p class="ext-caption">${caption}</p>\n` : ""}${cards(tokens[at], e
     `<li><a href="#${ext.id}"><code>${ext.name}</code></a>${ext.subsections.length
       ? `\n<ol>\n${ext.subsections.map(s => `<li class="l3"><a href="#${s.id}">${s.text}</a></li>`).join("\n")}\n</ol>` : ""}</li>`).join("\n")}\n</ol>`;
 
-  // The Markdown: the index, then each extension, with its links pointed at
-  // apron.chat or the sections below.
-  const markdown = [relink(index, { site: "https://apron.chat/", blob }).trimEnd(),
+  // The Markdown: the index, also without the rules for authors, then each
+  // extension, with its links pointed at apron.chat or the sections below.
+  const site = new Marked().lexer(relink(index, { site: "https://apron.chat/", blob }))
+    .filter((token, i) => !(token.type === "list" && i < at)).map(token => token.raw).join("").replace(/\n{3,}/g, "\n\n");
+  const markdown = [site.trimEnd(),
     ...extensions.map(ext => ext.text.trimEnd())].join("\n\n---\n\n") + "\n";
 
   return {

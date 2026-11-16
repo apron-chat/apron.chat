@@ -26,9 +26,9 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   with `templates/extensions.html` as its page. A card for each extension
   leads to its section, which names the spec sections it builds on and where
   its data lives (from the comment on each `ts` class, such as
-  `// server.ext.media`), and tags what clients do without it. The rules in
-  EXTENSIONS.md for every extension are for their authors, so the page leaves
-  them out; the Markdown keeps them. Its Markdown,
+  `// server.ext.media`), and tags what clients do without it. The page is for
+  people who implement extensions, so it and its Markdown leave out the rules
+  in EXTENSIONS.md for authors of new ones. Its Markdown,
   the index then each extension a heading level down, is served at
   `/extensions.md`, with a comment such as `<!-- #ext-bio -->` above each
   heading. The build fails if an extension's heading isn't its capability,
