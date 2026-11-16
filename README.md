@@ -20,11 +20,22 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   `/protocol-capabilities.md`, `/protocol-informative.md` and
   `/protocol-draft.md`. A note atop each lists the parts and which part holds
   each section it links to. These are generated, not committed.
+- `/extensions` is [EXTENSIONS.md](https://github.com/shazow/apron/blob/main/EXTENSIONS.md)
+  from shazow/apron and each extension it lists in `extensions/`, rendered
+  into `public/extensions.html` by `npm run build` (`scripts/extensions.mjs`)
+  with `templates/extensions.html` as its page. A card for each extension
+  leads to its section, which names the spec sections it builds on and where
+  its data lives (from the comment on each `ts` class, such as
+  `// server.ext.media`), and tags what clients do without it. Its Markdown,
+  the index then each extension a heading level down, is served at
+  `/extensions.md`, with a comment such as `<!-- #ext-bio -->` above each
+  heading. The build fails if an extension's heading isn't its capability,
+  such as `` # `ext:bio` ``.
 - `/llms.txt` is the [llms.txt](https://llmstxt.org/) index for agents,
   hand-edited in `templates/llms.txt`. `npm run build` writes it to
   `public/llms.txt` with each part's section ids filled in for
   `{{ids_required}}` and the like. It also writes `public/llms-full.txt`: the
-  index, then PROTOCOL.md and HISTORY.md in full. Agents that land on the
+  index, then PROTOCOL.md, HISTORY.md and the extensions in full. Agents that land on the
   spec find it from the top, not only the footer, since a fetch of the long
   page or its Markdown is often cut short: a line atop `/protocol` and atop
   `/protocol.md` and each part points to it, for the servers, clients, schema
@@ -34,9 +45,9 @@ apron.chat website: a static landing page for the [Apron Chat Protocol](https://
   names it with `Link: </llms.txt>; rel="describedby"` (set in
   `public/_headers`), as llms.txt v2 asks, and the pages do the same with a
   `<link rel="describedby">`.
-- `src/worker.js` serves Markdown to agents that ask for it: `/` and
-  `/protocol` with `Accept: text/markdown` (or `text/plain`) return `llms.txt`
-  and the spec's Markdown. Every other path is a static file.
+- `src/worker.js` serves Markdown to agents that ask for it: `/`,
+  `/protocol` and `/extensions` with `Accept: text/markdown` (or `text/plain`)
+  return `llms.txt`, the spec's Markdown and the extensions'. Every other path is a static file.
 - `wrangler.jsonc` deploys it with Cloudflare Workers Builds: `main` goes to
   apron.chat, and each pull request gets a preview URL. The Worker's build
   command is `npm run build`.
@@ -52,7 +63,7 @@ npx wrangler dev        # runs npm run build, then serves http://localhost:8787
 
 `npm run build` renders the spec from shazow/apron's `main`. Set `APRON_REF`
 to render another branch, tag or commit, or `APRON_PROTOCOL=../apron/PROTOCOL.md`
-to render a local copy.
+to render a local copy, with the EXTENSIONS.md and `extensions/` beside it.
 
 The spec page sorts the top-level sections into tiers by their headings:
 required from the first section, optional from "N. Capabilities",

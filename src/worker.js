@@ -1,11 +1,12 @@
-// Serves Markdown to agents that ask for it. A request for / or /protocol
-// that prefers text/markdown or text/plain over text/html gets llms.txt or
-// the spec's Markdown; everything else is the static site in public/.
-// wrangler.jsonc runs this only for those two paths.
+// Serves Markdown to agents that ask for it. A request for /, /protocol or
+// /extensions that prefers text/markdown or text/plain over text/html gets
+// llms.txt, the spec's Markdown or the extensions'; everything else is the
+// static site in public/. wrangler.jsonc runs this only for those paths.
 
 const markdown = {
   "/": "/llms.txt",
   "/protocol": "/protocol.md",
+  "/extensions": "/extensions.md",
 };
 
 export default {
