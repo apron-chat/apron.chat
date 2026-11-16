@@ -10,7 +10,7 @@ The protocol is incremental. The mandatory core is enough for a working chat: a 
 
 To implement Apron, read PROTOCOL.md, start with the core and its conformance checklist, then add capabilities as needed. Validate frames against the JSON Schema and test against the wire fixtures.
 
-The full specification is also at https://apron.chat/llms-full.txt, in one file. Each part's Sections are the ids of its headings, such as #42-rooms in https://apron.chat/protocol#42-rooms, and each is in a comment above its heading in the Markdown, such as <!-- #42-rooms -->. Requesting https://apron.chat/protocol with `Accept: text/markdown` returns the specification as Markdown.
+The full specification, with its history and the extensions, is also at https://apron.chat/llms-full.txt, in one file. Each part's Sections are the ids of its headings, such as #42-rooms in https://apron.chat/protocol#42-rooms, and each is in a comment above its heading in the Markdown, such as <!-- #42-rooms -->. Requesting https://apron.chat/protocol or https://apron.chat/extensions with `Accept: text/markdown` returns its Markdown.
 
 ## Specification
 
@@ -20,6 +20,7 @@ The full specification is also at https://apron.chat/llms-full.txt, in one file.
   - [Informative](https://apron.chat/protocol-informative.md): Security considerations, conventions and valid scenarios (§5, appendices A–B). Sections: {{ids_informative}}
   - [Draft](https://apron.chat/protocol-draft.md): Designs under consideration, not yet part of the protocol (appendix C). Sections: {{ids_draft}}
 - [HISTORY.md](https://raw.githubusercontent.com/shazow/apron/main/HISTORY.md): Changes by protocol version
+- [Extensions](https://apron.chat/extensions.md): Extensions in common use, beyond the specification: the index, then each extension. Sections: {{ids_extensions}}
 - [JSON Schema](https://raw.githubusercontent.com/shazow/apron/main/schema/apron.schema.json): An informative JSON Schema of every frame, for validation and editor completion
 - [Wire fixtures](https://raw.githubusercontent.com/shazow/apron/main/tests/fixtures/wire/README.md): Portable JSON scenarios that implementations can test against
 

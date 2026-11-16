@@ -1,4 +1,5 @@
-/* apron.chat: shared by the landing page (index.html) and the spec (protocol.html). */
+/* apron.chat: shared by the landing page (index.html), the spec (protocol.html)
+   and the extensions (extensions.html). */
 
 :root {
   --paper: #fafaf8;
@@ -16,6 +17,10 @@
   --optional-paper: #edf1f6;
   --optional-tint: #dce5ef;
   --informative-paper: #f1f0eb;
+  /* Extensions, beyond the spec, in green. */
+  --ext: #2b6440;
+  --ext-paper: #ecf3ed;
+  --ext-tint: #d9e8dc;
 }
 * { box-sizing: border-box; }
 body {
@@ -36,6 +41,8 @@ header.top { border-bottom: 2px solid var(--ink); }
 header.top nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px clamp(12px, 3.5vw, 28px); padding: 14px 16px; font-size: 14px; }
 header.top nav a { color: var(--ink); }
 header.top nav a.strong { color: var(--accent); font-weight: 700; }
+/* A link that would wrap the nav onto a second line on phones; the page links to it elsewhere. */
+@media (max-width: 479px) { header.top nav a.wide { display: none; } }
 
 footer { margin-top: 88px; border-top: 2px solid var(--ink); }
 footer .wrap { padding: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 13px; color: var(--muted); }
@@ -333,3 +340,50 @@ body.spec { overflow-x: clip; }
 .fold .toggle::before { content: "▸ Show section"; }
 .fold[open] .toggle::before { content: "▾ Hide section"; }
 .fold[open] > summary { margin-bottom: 14px; border-bottom: 1px dashed var(--rule); }
+
+/* Extensions: /extensions, rendered from EXTENSIONS.md and each file in
+   extensions/. The bar and its meter in green, a segment for each extension. */
+body.extensions { --tier: var(--ext); }
+.extensions .crumbs { background: var(--ext-tint); }
+
+/* Room between the introduction and the cards. */
+.extensions .prose h1 + p { margin-bottom: 28px; }
+
+/* The contents: a card for each extension, with the line on it from the
+   index, the spec sections it builds on, and its length. */
+.prose .ext-caption { font-size: 13px; color: var(--muted); }
+.prose .ext-cards { list-style: none; margin: 16px 0 18px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 14px; }
+.prose .ext-cards li { margin: 0; }
+.ext-card { height: 100%; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; background: #fff; border: 1px solid var(--ink); color: var(--ink); text-decoration: none; }
+.ext-card:hover { color: var(--ink); box-shadow: 4px 4px 0 var(--ext); }
+.ext-card:focus-visible { outline: 2px solid var(--ext); outline-offset: 2px; }
+.prose .ext-card .name { align-self: flex-start; padding: 1px 8px; background: var(--ext); color: #fff; font-weight: 700; font-size: 13px; }
+.ext-card .desc { flex: 1; font-size: 13px; line-height: 1.5; }
+.ext-card .desc code { padding: 0 3px; }
+.ext-card .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; padding-top: 6px; border-top: 1px dashed var(--rule); font-size: 12px; color: var(--muted); }
+.ext-card .foot code { background: none; padding: 0; color: var(--ext); }
+.ext-card .length { margin-left: auto; }
+.ext-toc code { color: var(--ext); font-weight: 700; }
+
+/* Each extension on a card of its own: its capability, the line on what it
+   adds, what in the spec it builds on and where its data lives, then the rest. */
+.prose section.extension { margin: 0 0 40px; padding: 2px clamp(14px, 3vw, 22px) 12px; background: #fff; border: 1px solid var(--ink); box-shadow: 6px 6px 0 var(--ext); }
+.prose section.extension h2 { margin: 18px 0 12px; color: var(--ext); border-bottom: 2px solid var(--ext); }
+.prose section.extension h2 code { background: none; padding: 0; font-size: inherit; }
+.prose section.extension h3 { margin-top: 32px; padding-top: 14px; border-top: 1px dashed var(--rule); }
+.prose .ext-lead { font-size: 16px; line-height: 1.6; }
+.prose .ext-meta { display: flex; flex-direction: column; gap: 4px; margin: 0 0 18px; padding: 8px 12px; background: var(--ext-paper); font-size: 13px; line-height: 1.5; }
+.ext-meta i { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ext); margin-right: 0.6ch; }
+.ext-meta .builds a { margin-right: 1.5ch; white-space: nowrap; }
+.ext-meta code { background: #fff; margin-right: 1ch; }
+.prose .ext-source { margin: 22px 0 0; padding-top: 8px; border-top: 1px dashed var(--rule); font-size: 12px; color: var(--muted); }
+.ext-source a { color: var(--muted); }
+/* What clients and servers do without the extension, tagged to be found at a glance. */
+.prose .fallback { padding: 6px 10px; background: var(--ext-paper); border-left: 3px solid var(--ext); }
+.prose li.fallback { list-style: none; margin-left: -3ch; }
+.fallback::before { content: "fallback"; display: inline-block; margin-right: 1ch; padding: 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--ext); }
+/* As in the spec's folds, code reaches past the card's padding and border
+   (22px and 1px at this width) by the same bleed as the rest of the prose. */
+@media (min-width: 980px) {
+  .prose .extension pre { margin-inline: calc(-1 * var(--bleed) - 23px); }
+}

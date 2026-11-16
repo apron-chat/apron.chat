@@ -4,12 +4,15 @@
 // tiers. Also writes public/index.html from templates/index.html with the
 // spec's version and FAQ.md's questions, public/llms.txt from
 // templates/llms.txt with the section ids in each part, and
-// public/llms-full.txt: llms.txt followed by PROTOCOL.md and HISTORY.md.
+// public/llms-full.txt: llms.txt followed by PROTOCOL.md, HISTORY.md and the
+// extensions. And renders EXTENSIONS.md with each extension it lists into
+// public/extensions.html, served at /extensions, and public/extensions.md
+// (scripts/extensions.mjs).
 // Run: npm run build
 //
 // APRON_REF picks the branch, tag or commit to render (default main).
 // APRON_PROTOCOL renders a local file instead, such as ../apron/PROTOCOL.md,
-// with the HISTORY.md and FAQ.md beside it.
+// with the HISTORY.md, FAQ.md, EXTENSIONS.md and extensions/ beside it.
 //
 // Anything missing fails the build before it writes a file, so a deploy keeps
 // the last good site rather than publishing a broken one.
@@ -22,6 +25,7 @@ import { gfmHeadingId, getHeadingList } from "marked-gfm-heading-id";
 import hljs from "highlight.js/lib/core";
 import json from "highlight.js/lib/languages/json";
 import typescript from "highlight.js/lib/languages/typescript";
+import { extensionFiles, renderExtensions } from "./extensions.mjs";
 
 const repo = "shazow/apron";
 const at = path => new URL(`../${path}`, import.meta.url);
@@ -49,8 +53,10 @@ async function source() {
     const markdown = readFileSync(process.env.APRON_PROTOCOL, "utf8");
     const beside = file => readFileSync(join(dirname(process.env.APRON_PROTOCOL), file), "utf8");
     const main = `https://github.com/${repo}/blob/main`;
-    return { markdown, history: beside("HISTORY.md"), faq: beside("FAQ.md"), label: "local", url: `https://github.com/${repo}`,
-      historyUrl: `${main}/HISTORY.md`, faqUrl: `${main}/FAQ.md` };
+    const index = beside("EXTENSIONS.md");
+    const files = new Map(extensionFiles(index).map(file => [file, beside(`extensions/${file}`)]));
+    return { markdown, history: beside("HISTORY.md"), faq: beside("FAQ.md"), extensions: { index, files }, label: "local",
+      url: `https://github.com/${repo}`, blob: main, historyUrl: `${main}/HISTORY.md`, faqUrl: `${main}/FAQ.md` };
   }
   const ref = process.env.APRON_REF || "main";
   // git, not the GitHub API, which rate-limits shared build machines.
@@ -61,10 +67,12 @@ async function source() {
     (/^[0-9a-f]{7,40}$/.test(ref) ? ref : undefined);
   if (!commit) throw new Error(`No branch, tag or commit named ${ref} in ${repo}`);
   const raw = file => get(`https://raw.githubusercontent.com/${repo}/${commit}/${file}`);
-  const [markdown, history, faq] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md"), raw("FAQ.md")]);
+  const [markdown, history, faq, index] = await Promise.all([raw("PROTOCOL.md"), raw("HISTORY.md"), raw("FAQ.md"), raw("EXTENSIONS.md")]);
+  // Each extension that EXTENSIONS.md lists.
+  const files = new Map(await Promise.all(extensionFiles(index).map(async file => [file, await raw(`extensions/${file}`)])));
   const label = /^[0-9a-f]{40}$/.test(commit) ? commit.slice(0, 7) : commit;
   const blob = `https://github.com/${repo}/blob/${commit}`;
-  return { markdown, history, faq, label, url: `${blob}/PROTOCOL.md`, historyUrl: `${blob}/HISTORY.md`,
+  return { markdown, history, faq, extensions: { index, files }, label, url: `${blob}/PROTOCOL.md`, blob, historyUrl: `${blob}/HISTORY.md`,
     // The FAQ by the name it was asked for, such as main, so links from the landing page stay readable.
     faqUrl: `https://github.com/${repo}/blob/${ref}/FAQ.md` };
 }
@@ -308,9 +316,13 @@ function questions(faq, faqUrl) {
   return `<ul class="faq">\n${list.map(q => `<li><a href="${escape(faqUrl)}#${q.id}">${q.text}</a></li>`).join("\n")}\n</ul>`;
 }
 
-const { markdown, history, faq, label, url, historyUrl, faqUrl } = await source();
+const { markdown, history, faq, extensions, label, url, blob, historyUrl, faqUrl } = await source();
 const { meta, body } = frontMatter(markdown);
+// The spec's headings by id, for the sections that extensions build on.
+new Marked(gfmHeadingId()).parse(body);
+const titles = new Map(getHeadingList().map(heading => [heading.id, heading.raw]));
 const { head, html, map, toc } = render(body, history, historyUrl);
+const ext = renderExtensions({ ...extensions, titles, highlight, blob });
 // The spec with its section ids, after the front matter, for agents.
 const front = markdown.slice(0, markdown.length - body.length);
 const { intro, sections } = sectioned(body);
@@ -329,7 +341,9 @@ const specNote = [
 // rather than publish a page without it.
 const version = meta.version ?? markdown.match(/\|\s*Protocol Version\s*\|\s*(\d+)\s*\|/)?.[1];
 if (!/^\d+$/.test(version ?? "")) throw new Error(`No "version: N" in PROTOCOL.md's front matter at ${label}`);
-const values = { head, content: html, map, toc, version, faq: questions(faq, faqUrl), faq_url: faqUrl, source: label, source_url: url };
+const values = { head, content: html, map, toc, version, faq: questions(faq, faqUrl), faq_url: faqUrl, source: label, source_url: url,
+  ext_title: ext.title, ext_intro: ext.intro, ext_contents: ext.contents, ext_sections: ext.sections, ext_toc: ext.toc,
+  ext_source_url: `${blob}/EXTENSIONS.md`, ids_extensions: ext.ids };
 // Each part's section ids for llms.txt, such as {{ids_optional}}: "#4-capabilities #41-command …".
 for (const [i, tier] of tiers.entries()) {
   values[`ids_${tier.key}`] = anchors((i ? "" : intro) + sections.filter(s => s.tier === tier).map(s => s.text).join(""))
@@ -340,6 +354,15 @@ const fill = template => readFileSync(at(`templates/${template}`), "utf8").repla
   if (!values[key]) throw new Error(`templates/${template}: no value for {{${key}}}`);
   return values[key];
 });
+// extensions.md leads with where the spec is, and where it came from.
+const extNote = [
+  `> Apron extensions, from ${blob}/EXTENSIONS.md and extensions/. Each`,
+  "> extension's id is in a comment above its heading, such as <!-- #ext-bio -->,",
+  "> for links like https://apron.chat/extensions#ext-bio. The specification is",
+  "> at https://apron.chat/protocol.md.",
+  ">",
+  `> ${more}`,
+].join("\n");
 // llms-full.txt (llmstxt.org): the index, then every document it leads with, in full.
 const llms = fill("llms.txt").trimEnd();
 const note = `Rendered from ${url}`;
@@ -348,8 +371,10 @@ const files = {
   "public/index.html": fill("index.html"),
   "public/llms.txt": llms + "\n",
   "public/protocol.md": `${front}\n${specNote}\n\n${rest.trimStart()}`,
-  "public/llms-full.txt": [llms, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd()].join("\n\n---\n\n") + "\n",
+  "public/extensions.html": fill("extensions.html"),
+  "public/extensions.md": `${extNote}\n\n${ext.markdown}`,
+  "public/llms-full.txt": [llms, `<!-- ${note} -->`, spec.trimEnd(), history.trimEnd(), ext.markdown.trimEnd()].join("\n\n---\n\n") + "\n",
   ...parts(front, intro, sections, version),
 };
 for (const [path, text] of Object.entries(files)) writeFileSync(at(path), text);
-console.log(`Rendered PROTOCOL.md v${version} from ${repo}@${label} into public/protocol.html`);
+console.log(`Rendered PROTOCOL.md v${version} from ${repo}@${label} into public/protocol.html, and its extensions into public/extensions.html`);
