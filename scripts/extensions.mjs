@@ -52,8 +52,10 @@ function specLinks(markdown, titles) {
 }
 
 // Where an extension's data lives, from the comment on each class in its ts
-// block, such as `class Media { // server.ext.media`.
-const places = markdown => [...new Set([...markdown.matchAll(/^class \w+ \{\s*\/\/ ([^,\n]+)/gm)].map(([, place]) => place.trim()))];
+// block, such as `class Media { // server.ext.media`. A class inside another,
+// such as `// catalog[":name:"]`, has no ext in its path, and is left out.
+const places = markdown => [...new Set([...markdown.matchAll(/^class \w+ \{\s*\/\/ ([^,\n]+)/gm)]
+  .map(([, place]) => place.trim()).filter(place => /\.ext\./.test(place)))];
 
 // The same touches the spec's page gets: a link on each heading, scrolling
 // tables, and the requirement keywords in bold.
@@ -133,7 +135,7 @@ function cards(list, extensions) {
 export function renderExtensions({ index, files, titles, highlight, blob }) {
   const extensions = extensionFiles(index).map(file => extension(file, files.get(file), { highlight, titles, blob }));
 
-  // EXTENSIONS.md: its title, an introduction and the general rules, then a
+  // EXTENSIONS.md: its title, an introduction and the rules for authors, then a
   // paragraph that leads into the list of extensions, which the cards replace.
   const local = relink(index, { site: "/", blob });
   const tokens = new Marked().lexer(local);
@@ -142,9 +144,9 @@ export function renderExtensions({ index, files, titles, highlight, blob }) {
   if (!title || at < 0) throw new Error("EXTENSIONS.md has no title, or no list of extensions");
   const body = tokens.slice(tokens.indexOf(title) + 1, at).filter(token => token.type !== "space");
   const lead = body.at(-1)?.type === "paragraph" ? body.pop() : null;
-  let intro = polish(new Marked(highlight).parser(body));
-  // The rules that apply to every extension, set apart from the introduction.
-  intro = intro.replace(/<ul>([\s\S]*?)<\/ul>/, '<div class="ext-rules"><p class="ext-rules-title">Every extension</p>\n<ul>$1</ul></div>');
+  // The introduction, without the list of rules that every extension follows:
+  // those are for the extensions' authors, and stay in the Markdown.
+  const intro = polish(new Marked(highlight).parser(body.filter(token => token.type !== "list")));
   const caption = lead ? new Marked().parseInline(lead.text) : "";
 
   const total = extensions.reduce((n, ext) => n + ext.length, 0);

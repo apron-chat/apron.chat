@@ -346,10 +346,8 @@ body.spec { overflow-x: clip; }
 body.extensions { --tier: var(--ext); }
 .extensions .crumbs { background: var(--ext-tint); }
 
-/* The rules every extension follows, set apart from the introduction. */
-.prose .ext-rules { margin: 22px 0 32px; padding: 12px 18px 2px; background: #fff; border: 1px solid var(--ink); border-left: 6px solid var(--ext); }
-.prose .ext-rules-title { margin: 0 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ext); }
-.prose .ext-rules li { margin-bottom: 6px; }
+/* Room between the introduction and the cards. */
+.extensions .prose h1 + p { margin-bottom: 28px; }
 
 /* The contents: a card for each extension, with the line on it from the
    index, the spec sections it builds on, and its length. */
@@ -384,7 +382,8 @@ body.extensions { --tier: var(--ext); }
 .prose .fallback { padding: 6px 10px; background: var(--ext-paper); border-left: 3px solid var(--ext); }
 .prose li.fallback { list-style: none; margin-left: -3ch; }
 .fallback::before { content: "fallback"; display: inline-block; margin-right: 1ch; padding: 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; background: var(--ext); }
-/* Code stays inside the extension's card, and scrolls. */
+/* As in the spec's folds, code reaches past the card's padding and border
+   (22px and 1px at this width) by the same bleed as the rest of the prose. */
 @media (min-width: 980px) {
-  .prose .extension pre { margin-inline: 0; }
+  .prose .extension pre { margin-inline: calc(-1 * var(--bleed) - 23px); }
 }
