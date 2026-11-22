@@ -99,8 +99,10 @@ function extension(file, markdown, { highlight, titles, blob }) {
     builds.length && `<span class="builds"><i>Builds on</i> ${builds.map(([to, label]) => `<a href="/protocol#${to}">${escape(label)}</a>`).join(" ")}</span>`,
     data.length && `<span class="data"><i>Data in</i> ${data.map(place => `<code>${escape(place)}</code>`).join(" ")}</span>`,
   ].filter(Boolean).join("");
+  // Floated right, so the later link, its source pinned to the commit, sits
+  // to the left of "↑ contents".
   const section = `<section class="extension" aria-labelledby="${id}">
-<h2 id="${id}"><code>${capability(file)}</code><a class="anchor" href="#${id}" aria-label="Link to this extension">#</a><a class="up" href="#contents">↑ contents</a></h2>
+<h2 id="${id}"><code>${capability(file)}</code><a class="anchor" href="#${id}" aria-label="Link to this extension">#</a><a class="up" href="#contents">↑ contents</a><a class="up" href="${escape(blob)}/extensions/${file}" aria-label="Source of ${capability(file)} on GitHub">source</a></h2>
 <p class="ext-lead">${lead[1]}</p>
 ${meta ? `<p class="ext-meta">${meta}</p>\n` : ""}${html}<p class="ext-source"><a href="${escape(blob)}/extensions/${file}">extensions/${file}</a> · ${count(length)} words</p>
 </section>\n`;
