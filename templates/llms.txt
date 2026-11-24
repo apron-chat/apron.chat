@@ -40,4 +40,4 @@ The full specification, with its history and the extensions, is also at https://
 
 - [README](https://raw.githubusercontent.com/shazow/apron/main/README.md): Goals, assumptions, trade-offs and background
 - [FAQ](https://raw.githubusercontent.com/shazow/apron/main/FAQ.md): Why the server is trusted, how Apron compares to XMPP, Matrix, Slack and Discord, how AI was used to build it, and the name
-- [Live demo](https://web.apron.chat/): The web client, connected to wss://server.apron.chat/
+- [Live demo](https://server.apron.chat/): The web client, connected to wss://server.apron.chat/
